@@ -3,9 +3,10 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "start": "cd node-api && npm start",
-    "dev": "cd node-api && npm run dev",
-    "seed": "cd node-api && npm run seed"
+    "postinstall": "npm install --prefix node-api",
+    "start": "npm --prefix node-api start",
+    "dev": "npm --prefix node-api run dev",
+    "seed": "npm --prefix node-api run seed"
   },
   "dependencies": {
     "dotenv": "^17.3.1"
