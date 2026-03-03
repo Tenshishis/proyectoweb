@@ -9,7 +9,7 @@ API_BASE = os.getenv('API_BASE', 'http://localhost:4000/api')
 
 @app.route('/')
 def index():
-    return redirect('/login')
+    return render_template('index.html')
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
