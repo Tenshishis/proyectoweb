@@ -1,13 +1,13 @@
-// ...existing code...
-// Serve admin redirect page (only for admin)
-app.get('/admin-redirect', (req, res) => {
-  const user = getUserFromCookie(req);
-  if (!user || user.rol !== 'ADMIN') return res.status(403).send('<h3>No autorizado</h3>');
-  res.sendFile(path.join(__dirname, 'public', 'templates', 'admin_redirect.html'));
-});
 // Helper to get user from JWT cookie
 function getUserFromCookie(req) {
   const token = req.cookies.token;
+  // ...existing code...
+  // Serve admin redirect page (only for admin)
+  app.get('/admin-redirect', (req, res) => {
+    const user = getUserFromCookie(req);
+    if (!user || user.rol !== 'ADMIN') return res.status(403).send('<h3>No autorizado</h3>');
+    res.sendFile(path.join(__dirname, 'public', 'templates', 'admin_redirect.html'));
+  });
   if (!token) return null;
   try {
     const jwt = require('jsonwebtoken');
