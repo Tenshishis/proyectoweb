@@ -2,14 +2,20 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
 exports.verifyToken = async (req, res, next) => {
+  let token = null;
+  // Try Authorization header first
   const header = req.headers.authorization;
-  if (!header) return res.status(401).json({ message: 'No token provided' });
-
-  const parts = header.split(' ');
-  if (parts.length !== 2 || parts[0] !== 'Bearer')
-    return res.status(401).json({ message: 'Invalid authorization format' });
-
-  const token = parts[1];
+  if (header) {
+    const parts = header.split(' ');
+    if (parts.length === 2 && parts[0] === 'Bearer') {
+      token = parts[1];
+    }
+  }
+  // If not found, try cookie
+  if (!token && req.cookies && req.cookies.token) {
+    token = req.cookies.token;
+  }
+  if (!token) return res.status(401).json({ message: 'No token provided' });
 
   try {
     const payload = jwt.verify(token, process.env.JWT_SECRET);

@@ -1,3 +1,17 @@
+// Helper to get user from JWT cookie
+function getUserFromCookie(req) {
+  const token = req.cookies.token;
+  if (!token) return null;
+  try {
+    const jwt = require('jsonwebtoken');
+    return jwt.verify(token, process.env.JWT_SECRET);
+  } catch {
+    return null;
+  }
+}
+const cookieParser = require('cookie-parser');
+const { verifyToken } = require('./src/middleware/authMiddleware');
+const { authorize } = require('./src/middleware/roleMiddleware');
 const fetch = require('node-fetch');
 
 require('dotenv').config();
@@ -8,7 +22,9 @@ const routes = require('./src/routes');
 const cors = require('cors');
 const path = require('path');
 
+
 const app = express();
+app.use(cookieParser());
 
 // Serve static files (Bootstrap CDN used, but for images/assets if needed)
 app.use('/static', express.static(path.join(__dirname, 'public')));
@@ -22,6 +38,10 @@ app.get('/register', (req, res) => {
 app.get('/login', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'templates', 'login.html'));
 });
+
+// Parse request bodies before routes
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 
 // Handle register POST (proxy to API)
 app.post('/register', async (req, res) => {
@@ -38,6 +58,7 @@ app.post('/register', async (req, res) => {
       res.status(response.status).send(`<h3>Error: ${data.error || data}</h3><a href="/register">Volver</a>`);
     }
   } catch (err) {
+    console.error('Register error:', err);
     res.status(500).send('<h3>Error de servidor</h3>');
   }
 });
@@ -45,6 +66,7 @@ app.post('/register', async (req, res) => {
 // Handle login POST (proxy to API)
 app.post('/login', async (req, res) => {
   try {
+    console.log('Login req.body:', req.body);
     const response = await fetch(`${process.env.API_BASE || 'http://localhost:4000'}/api/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -52,17 +74,72 @@ app.post('/login', async (req, res) => {
     });
     const data = await response.json();
     if (response.status === 200) {
-      res.send('<h3>Login exitoso. (Aquí deberías redirigir al panel de usuario)</h3>');
+      // Save JWT in cookie for subsequent requests
+      if (data.token) {
+        res.cookie('token', data.token, { httpOnly: true });
+      }
+      // Redirect based on role
+      const jwt = require('jsonwebtoken');
+      const payload = jwt.decode(data.token);
+      if (payload && payload.rol === 'ADMIN') {
+        res.redirect('/admin-redirect');
+      } else if (payload && payload.rol === 'VENDEDOR') {
+        res.redirect('/vendedor');
+      } else if (payload && payload.rol === 'CONSULTOR') {
+        res.redirect('/consultor');
+      } else {
+        res.redirect('/espera-rol');
+      }
+    // Serve espera rol page
+    app.get('/espera-rol', (req, res) => {
+      res.sendFile(path.join(__dirname, 'public', 'templates', 'espera_rol.html'));
+    });
     } else {
       res.status(response.status).send(`<h3>Error: ${data.error || data}</h3><a href="/login">Volver</a>`);
     }
+  // Serve admin redirect page (only for admin)
+  app.get('/admin-redirect', (req, res) => {
+    const user = getUserFromCookie(req);
+    if (!user || user.rol !== 'ADMIN') return res.status(403).send('<h3>No autorizado</h3>');
+    res.sendFile(path.join(__dirname, 'public', 'templates', 'admin_redirect.html'));
+  });
+
+  // Serve admin user management page (only for admin)
+  app.get('/admin/users', (req, res) => {
+    const user = getUserFromCookie(req);
+    if (!user || user.rol !== 'ADMIN') return res.status(403).send('<h3>No autorizado</h3>');
+    res.sendFile(path.join(__dirname, 'public', 'templates', 'admin_users.html'));
+  });
+
+  // Serve admin panel (legacy, keep for API)
+  app.get('/admin', (req, res) => {
+    const user = getUserFromCookie(req);
+    if (!user || user.rol !== 'ADMIN') return res.status(403).send('<h3>No autorizado</h3>');
+    res.sendFile(path.join(__dirname, 'public', 'templates', 'admin.html'));
+  });
+
+  // Serve vendedor panel (only for vendedor)
+  app.get('/vendedor', (req, res) => {
+    const user = getUserFromCookie(req);
+    if (!user || user.rol !== 'vendedor') return res.status(403).send('<h3>No autorizado</h3>');
+    res.sendFile(path.join(__dirname, 'public', 'templates', 'vendedor.html'));
+  });
+
+  // Serve consultor panel (only for consultor)
+  app.get('/consultor', (req, res) => {
+    const user = getUserFromCookie(req);
+    if (!user || user.rol !== 'consultor') return res.status(403).send('<h3>No autorizado</h3>');
+    res.sendFile(path.join(__dirname, 'public', 'templates', 'consultor.html'));
+  });
   } catch (err) {
+    console.error('Login error:', err);
     res.status(500).send('<h3>Error de servidor</h3>');
   }
 });
 
 // middlewares
 app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 
 // enable CORS for frontend (Flask default: http://127.0.0.1:5000)
 app.use(cors({ origin: ['http://127.0.0.1:5000','http://localhost:5000'], credentials: true }));

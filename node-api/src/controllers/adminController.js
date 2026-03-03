@@ -17,7 +17,7 @@ exports.asignarRol = async (req, res) => {
 
 exports.listUsers = async (req, res) => {
   try {
-    const users = await adminService.listNonAdminUsers();
+    const users = await adminService.listAllUsers();
     res.json({ users });
   } catch (err) {
     res.status(500).json({ error: 'Error fetching users' });

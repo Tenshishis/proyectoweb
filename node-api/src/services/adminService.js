@@ -54,11 +54,8 @@ class AdminService {
         throw error;
       }
 
-      if (user.rol === 'ADMIN') {
-        const error = new Error('No permitido eliminar usuarios ADMIN');
-        error.status = 403;
-        throw error;
-      }
+
+      // Allow deleting/changing admins (including self)
 
       const deleted = await userRepo.deleteById(userId);
       return { message: 'Usuario eliminado', user: { id: deleted._id, username: deleted.username, email: deleted.email } };
