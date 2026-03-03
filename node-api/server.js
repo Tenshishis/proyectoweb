@@ -1,4 +1,14 @@
+
+require('dotenv').config();
+const express = require('express');
+const bodyParser = require('body-parser');
+const db = require('./src/config/db');
+const routes = require('./src/routes');
+const cors = require('cors');
 const path = require('path');
+
+const app = express();
+
 // Serve static files (Bootstrap CDN used, but for images/assets if needed)
 app.use('/static', express.static(path.join(__dirname, 'public')));
 
@@ -49,14 +59,6 @@ app.post('/login', async (req, res) => {
     res.status(500).send('<h3>Error de servidor</h3>');
   }
 });
-require('dotenv').config();
-const express = require('express');
-const bodyParser = require('body-parser');
-const db = require('./src/config/db');
-const routes = require('./src/routes');
-const cors = require('cors');
-
-const app = express();
 
 // middlewares
 app.use(bodyParser.json());
