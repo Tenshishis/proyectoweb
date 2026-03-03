@@ -44,18 +44,24 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // Handle register POST (proxy to API)
+// Directly call controller logic for register
+const authController = require('./src/controllers/authController');
 app.post('/register', async (req, res) => {
+  // Use a mock response object to capture controller output
+  let statusSent = 200;
+  let jsonSent = null;
+  let errorSent = null;
+  const mockRes = {
+    status(code) { statusSent = code; return this; },
+    json(obj) { jsonSent = obj; return this; },
+    send(obj) { jsonSent = obj; return this; }
+  };
   try {
-    const response = await fetch(`${process.env.API_BASE || 'http://localhost:4000'}/api/auth/register`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(req.body)
-    });
-    const data = await response.json();
-    if (response.status === 201) {
+    await authController.register(req, mockRes);
+    if (statusSent === 201) {
       res.send('<h3>Registrado. Espera que un administrador te asigne un rol.</h3><a href="/login">Iniciar sesión</a>');
     } else {
-      res.status(response.status).send(`<h3>Error: ${data.error || data}</h3><a href="/register">Volver</a>`);
+      res.status(statusSent).send(`<h3>Error: ${(jsonSent && (jsonSent.error || jsonSent.message)) || jsonSent}</h3><a href="/register">Volver</a>`);
     }
   } catch (err) {
     console.error('Register error:', err);
@@ -65,22 +71,19 @@ app.post('/register', async (req, res) => {
 
 // Handle login POST (proxy to API)
 app.post('/login', async (req, res) => {
+  let statusSent = 200;
+  let jsonSent = null;
+  const mockRes = {
+    status(code) { statusSent = code; return this; },
+    json(obj) { jsonSent = obj; return this; },
+    send(obj) { jsonSent = obj; return this; }
+  };
   try {
-    console.log('Login req.body:', req.body);
-    const response = await fetch(`${process.env.API_BASE || 'http://localhost:4000'}/api/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(req.body)
-    });
-    const data = await response.json();
-    if (response.status === 200) {
-      // Save JWT in cookie for subsequent requests
-      if (data.token) {
-        res.cookie('token', data.token, { httpOnly: true });
-      }
-      // Redirect based on role
+    await authController.login(req, mockRes);
+    if (statusSent === 200 && jsonSent && jsonSent.token) {
+      res.cookie('token', jsonSent.token, { httpOnly: true });
       const jwt = require('jsonwebtoken');
-      const payload = jwt.decode(data.token);
+      const payload = jwt.decode(jsonSent.token);
       if (payload && payload.rol === 'ADMIN') {
         res.redirect('/admin-redirect');
       } else if (payload && payload.rol === 'VENDEDOR') {
@@ -90,47 +93,9 @@ app.post('/login', async (req, res) => {
       } else {
         res.redirect('/espera-rol');
       }
-    // Serve espera rol page
-    app.get('/espera-rol', (req, res) => {
-      res.sendFile(path.join(__dirname, 'public', 'templates', 'espera_rol.html'));
-    });
     } else {
-      res.status(response.status).send(`<h3>Error: ${data.error || data}</h3><a href="/login">Volver</a>`);
+      res.status(statusSent).send(`<h3>Error: ${(jsonSent && (jsonSent.error || jsonSent.message)) || jsonSent}</h3><a href="/login">Volver</a>`);
     }
-  // Serve admin redirect page (only for admin)
-  app.get('/admin-redirect', (req, res) => {
-    const user = getUserFromCookie(req);
-    if (!user || user.rol !== 'ADMIN') return res.status(403).send('<h3>No autorizado</h3>');
-    res.sendFile(path.join(__dirname, 'public', 'templates', 'admin_redirect.html'));
-  });
-
-  // Serve admin user management page (only for admin)
-  app.get('/admin/users', (req, res) => {
-    const user = getUserFromCookie(req);
-    if (!user || user.rol !== 'ADMIN') return res.status(403).send('<h3>No autorizado</h3>');
-    res.sendFile(path.join(__dirname, 'public', 'templates', 'admin_users.html'));
-  });
-
-  // Serve admin panel (legacy, keep for API)
-  app.get('/admin', (req, res) => {
-    const user = getUserFromCookie(req);
-    if (!user || user.rol !== 'ADMIN') return res.status(403).send('<h3>No autorizado</h3>');
-    res.sendFile(path.join(__dirname, 'public', 'templates', 'admin.html'));
-  });
-
-  // Serve vendedor panel (only for vendedor)
-  app.get('/vendedor', (req, res) => {
-    const user = getUserFromCookie(req);
-    if (!user || user.rol !== 'vendedor') return res.status(403).send('<h3>No autorizado</h3>');
-    res.sendFile(path.join(__dirname, 'public', 'templates', 'vendedor.html'));
-  });
-
-  // Serve consultor panel (only for consultor)
-  app.get('/consultor', (req, res) => {
-    const user = getUserFromCookie(req);
-    if (!user || user.rol !== 'consultor') return res.status(403).send('<h3>No autorizado</h3>');
-    res.sendFile(path.join(__dirname, 'public', 'templates', 'consultor.html'));
-  });
   } catch (err) {
     console.error('Login error:', err);
     res.status(500).send('<h3>Error de servidor</h3>');
