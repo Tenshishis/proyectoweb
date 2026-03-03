@@ -1,3 +1,54 @@
+const path = require('path');
+// Serve static files (Bootstrap CDN used, but for images/assets if needed)
+app.use('/static', express.static(path.join(__dirname, 'public')));
+
+// Serve register page
+app.get('/register', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'templates', 'register.html'));
+});
+
+// Serve login page
+app.get('/login', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'templates', 'login.html'));
+});
+
+// Handle register POST (proxy to API)
+app.post('/register', async (req, res) => {
+  try {
+    const response = await fetch(`${process.env.API_BASE || 'http://localhost:4000'}/api/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(req.body)
+    });
+    const data = await response.json();
+    if (response.status === 201) {
+      res.send('<h3>Registrado. Espera que un administrador te asigne un rol.</h3><a href="/login">Iniciar sesión</a>');
+    } else {
+      res.status(response.status).send(`<h3>Error: ${data.error || data}</h3><a href="/register">Volver</a>`);
+    }
+  } catch (err) {
+    res.status(500).send('<h3>Error de servidor</h3>');
+  }
+});
+
+// Handle login POST (proxy to API)
+app.post('/login', async (req, res) => {
+  try {
+    const response = await fetch(`${process.env.API_BASE || 'http://localhost:4000'}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(req.body)
+    });
+    const data = await response.json();
+    if (response.status === 200) {
+      res.send('<h3>Login exitoso. (Aquí deberías redirigir al panel de usuario)</h3>');
+    } else {
+      res.status(response.status).send(`<h3>Error: ${data.error || data}</h3><a href="/login">Volver</a>`);
+    }
+  } catch (err) {
+    res.status(500).send('<h3>Error de servidor</h3>');
+  }
+});
 require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
@@ -32,8 +83,8 @@ app.get('/', (req, res) => {
             <div class="card shadow p-4">
               <h1 class="mb-4">Bienvenido a ProyectoWeb</h1>
               <p class="mb-4">Sistema de registro, login y roles.</p>
-              <a href="/api/auth/register" class="btn btn-primary btn-lg me-2">Registrarse (API)</a>
-              <a href="/api/auth/login" class="btn btn-outline-primary btn-lg">Iniciar Sesión (API)</a>
+              <a href="/register" class="btn btn-primary btn-lg me-2">Registrarse</a>
+              <a href="/login" class="btn btn-outline-primary btn-lg">Iniciar Sesión</a>
             </div>
           </div>
         </div>
