@@ -1,3 +1,4 @@
+// ...existing code...
 // Serve admin redirect page (only for admin)
 app.get('/admin-redirect', (req, res) => {
   const user = getUserFromCookie(req);
