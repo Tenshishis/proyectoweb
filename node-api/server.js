@@ -8,12 +8,6 @@ function getUserFromCookie(req) {
   } catch {
     return null;
   }
-// Serve admin redirect page (only for admin)
-app.get('/admin-redirect', (req, res) => {
-  const user = getUserFromCookie(req);
-  if (!user || user.rol !== 'ADMIN') return res.status(403).send('<h3>No autorizado</h3>');
-  res.sendFile(path.join(__dirname, 'public', 'templates', 'admin_redirect.html'));
-});
 }
 const cookieParser = require('cookie-parser');
 const { verifyToken } = require('./src/middleware/authMiddleware');
@@ -31,6 +25,20 @@ const path = require('path');
 
 const app = express();
 app.use(cookieParser());
+
+// Serve admin redirect page (only for admin)
+app.get('/admin-redirect', (req, res) => {
+  const user = getUserFromCookie(req);
+  if (!user || user.rol !== 'ADMIN') return res.status(403).send('<h3>No autorizado</h3>');
+  res.sendFile(path.join(__dirname, 'public', 'templates', 'admin_redirect.html'));
+});
+
+// Serve admin user management page (only for admin)
+app.get('/admin/users', (req, res) => {
+  const user = getUserFromCookie(req);
+  if (!user || user.rol !== 'ADMIN') return res.status(403).send('<h3>No autorizado</h3>');
+  res.sendFile(path.join(__dirname, 'public', 'templates', 'admin_users.html'));
+});
 
 // Serve static files (Bootstrap CDN used, but for images/assets if needed)
 app.use('/static', express.static(path.join(__dirname, 'public')));
@@ -147,6 +155,22 @@ app.get('/', (req, res) => {
 
 // routes
 app.use('/api', routes);
+
+// Debug route: list registered routes (helpful to verify /admin-redirect is registered)
+app.get('/_routes', (req, res) => {
+  try {
+    const routes = [];
+    app._router.stack.forEach(mw => {
+      if (mw.route && mw.route.path) {
+        const methods = Object.keys(mw.route.methods).join(',').toUpperCase();
+        routes.push({ path: mw.route.path, methods });
+      }
+    });
+    res.json(routes);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // error handler
 app.use((err, req, res, next) => {
