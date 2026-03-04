@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProyectoWeb - Product & Inventory API</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .welcome-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        .welcome-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 60px 30px;
+            text-align: center;
+        }
+
+        .welcome-header i {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.9;
+        }
+
+        .welcome-header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .welcome-header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .welcome-body {
+            padding: 40px 30px;
+        }
+
+        .feature-list {
+            margin: 30px 0;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .feature-item:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
+        }
+
+        .feature-item i {
+            color: #667eea;
+            font-size: 1.3rem;
+            width: 40px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .feature-item span {
+            font-size: 0.95rem;
+            color: #333;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 40px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            flex: 1;
+            min-width: 150px;
+            padding: 12px 20px;
+            font-size: 1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+            color: white;
+            text-decoration: none;
+        }
+
+        .btn-secondary {
+            background: #e9ecef;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+
+        .btn-secondary:hover {
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+        }
+
+        .api-info {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 30px;
+            border-left: 4px solid #667eea;
+        }
+
+        .api-info h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 1rem;
+        }
+
+        .api-info p {
+            color: #666;
+            font-size: 0.9rem;
+            margin: 5px 0;
+        }
+
+        .api-info code {
+            background: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            color: #764ba2;
+            font-size: 0.85rem;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .stat-box {
+            background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid #667eea30;
+        }
+
+        .stat-box i {
+            color: #667eea;
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+        }
+
+        .stat-box p {
+            color: #666;
+            font-size: 0.9rem;
+            margin: 0;
+        }
+
+        @media (max-width: 600px) {
+            .welcome-header {
+                padding: 40px 20px;
+            }
+
+            .welcome-header h1 {
+                font-size: 2rem;
+            }
+
+            .welcome-header i {
+                font-size: 3rem;
+            }
+
+            .cta-buttons {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+
+            .stats {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .version {
+            text-align: center;
+            color: #999;
+            font-size: 0.85rem;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="welcome-container">
+        <div class="welcome-header">
+            <i class="fas fa-cube"></i>
+            <h1>ProyectoWeb</h1>
+            <p>Sistema de Gestión de Productos e Inventario</p>
+        </div>
+
+        <div class="welcome-body">
+            <p style="text-align: center; color: #666; font-size: 1.05rem; margin-bottom: 30px;">
+                🚀 Bienvenido a tu API REST de gestión completa
+            </p>
+
+            <div class="cta-buttons">
+                <a href="/dashboard/" class="btn btn-primary">
+                    <i class="fas fa-chart-line"></i> Ir al Dashboard
+                </a>
+                <a href="#api-docs" class="btn btn-secondary">
+                    <i class="fas fa-book"></i> API Docs
+                </a>
+            </div>
+
+            <div class="stats">
+                <div class="stat-box">
+                    <i class="fas fa-cube"></i>
+                    <p>Productos</p>
+                </div>
+                <div class="stat-box">
+                    <i class="fas fa-warehouse"></i>
+                    <p>Inventario</p>
+                </div>
+                <div class="stat-box">
+                    <i class="fas fa-users"></i>
+                    <p>Usuarios</p>
+                </div>
+            </div>
+
+            <div class="feature-list">
+                <h3 style="color: #333; margin-bottom: 15px;">✨ Características</h3>
+                <div class="feature-item">
+                    <i class="fas fa-lock"></i>
+                    <span><strong>Autenticación JWT</strong> - Seguridad de nivel empresarial</span>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-chart-pie"></i>
+                    <span><strong>Dashboard Moderno</strong> - Visualizaciones en tiempo real</span>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-boxes"></i>
+                    <span><strong>CRUD Completo</strong> - Gestión total de productos</span>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-exchange-alt"></i>
+                    <span><strong>Control de Inventario</strong> - Entrada, salida, reservas</span>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-role-switch"></i>
+                    <span><strong>Control de Acceso</strong> - 3 roles definidos (Admin, Vendedor, Consultor)</span>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-mobile-alt"></i>
+                    <span><strong>Responsive Design</strong> - Funciona en todos los dispositivos</span>
+                </div>
+            </div>
+
+            <div class="api-info" id="api-docs">
+                <h3><i class="fas fa-code"></i> API REST</h3>
+                <p><strong>Base URL:</strong> <code>http://localhost:8000</code></p>
+                <p><strong>Endpoints:</strong> <code>/api/productos</code>, <code>/api/inventario</code>, <code>/api/usuarios</code></p>
+                <p><strong>Documentación:</strong> Ver <code>API_EXAMPLES.md</code> para ejemplos de uso</p>
+                <p><strong>Autenticación:</strong> Bearer Token en header <code>Authorization</code></p>
+            </div>
+
+            <div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin-top: 20px;">
+                <p style="margin: 0; color: #856404; font-size: 0.95rem;">
+                    <strong><i class="fas fa-info-circle"></i> Nota:</strong> 
+                    Asegúrate de que la API está corriendo antes de usar el dashboard. 
+                    Ejecuta <code>composer serve</code> en la terminal.
+                </p>
+            </div>
+
+            <div class="version">
+                <p><i class="fas fa-check-circle" style="color: #28a745;"></i> API v1.0.0 - En línea ✓</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Auto-redirect to dashboard if already logged in
+        if (localStorage.getItem('token')) {
+            // Ya tiene sesión, redirigir al dashboard
+            // Comentado para que primero vea la página de bienvenida
+            // window.location.href = '/dashboard/';
+        }
+
+        // Smooth scroll para el link de API Docs
+        document.querySelector('a[href="#api-docs"]').addEventListener('click', function(e) {
+            e.preventDefault();
+            document.querySelector('#api-docs').scrollIntoView({ behavior: 'smooth' });
+        });
+    </script>
+</body>
+</html>

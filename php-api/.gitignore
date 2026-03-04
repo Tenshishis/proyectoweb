@@ -1,0 +1,19 @@
+# Ignore files
+.DS_Store
+.env
+.env.local
+.env*.local
+vendor/
+node_modules/
+composer.lock
+package-lock.json
+*.log
+*.tmp
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.php-version
+build/
+dist/

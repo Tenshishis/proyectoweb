@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Gestión de Productos e Inventario</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+    <!-- LOGIN MODAL -->
+    <div id="loginModal" class="modal show d-flex align-items-center justify-content-center" style="display: none; background: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-sign-in-alt"></i> Login - Gestión de Inventario
+                    </h5>
+                </div>
+                <div class="modal-body">
+                    <form id="loginForm">
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" placeholder="admin@tienda.com" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Contraseña</label>
+                            <input type="password" class="form-control" id="password" placeholder="••••••••" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-lock"></i> Entrar
+                        </button>
+                    </form>
+                    <hr>
+                    <p class="small text-muted">
+                        <strong>Usuarios de prueba:</strong><br>
+                        admin@tienda.com / admin123456<br>
+                        vendedor@tienda.com / admin123456<br>
+                        consultor@tienda.com / admin123456
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- NAVBAR -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top" id="navbar" style="display: none;">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-warehouse"></i> ProyectoWeb Inventory
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" data-page="dashboard">
+                            <i class="fas fa-home"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item" id="productosNav" style="display: none;">
+                        <a class="nav-link" href="#" data-page="productos">
+                            <i class="fas fa-boxes"></i> Productos
+                        </a>
+                    </li>
+                    <li class="nav-item" id="inventarioNav" style="display: none;">
+                        <a class="nav-link" href="#" data-page="inventario">
+                            <i class="fas fa-archive"></i> Inventario
+                        </a>
+                    </li>
+                    <li class="nav-item" id="usuariosNav" style="display: none;">
+                        <a class="nav-link" href="#" data-page="usuarios">
+                            <i class="fas fa-users"></i> Usuarios
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user-circle"></i> <span id="userName">Usuario</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                            <li><a class="dropdown-item" href="#" id="profileLink"><i class="fas fa-id-card"></i> Mi Perfil</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#" id="logoutLink"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- MAIN CONTENT -->
+    <div class="container-fluid mt-4" id="mainContent" style="display: none;">
+        <!-- DASHBOARD PAGE -->
+        <div id="dashboardPage" class="page-content">
+            <div class="row mb-4">
+                <div class="col-12">
+                    <h2 class="page-title">
+                        <i class="fas fa-chart-line"></i> Dashboard
+                    </h2>
+                </div>
+            </div>
+
+            <!-- STATS CARDS -->
+            <div class="row" id="statsContainer">
+                <div class="col-md-3 col-sm-6 mb-4">
+                    <div class="card stat-card">
+                        <div class="card-body">
+                            <div class="stat-icon" style="background: #007bff;">
+                                <i class="fas fa-boxes"></i>
+                            </div>
+                            <h6 class="text-muted">Total Productos</h6>
+                            <h3 id="totalProductos">0</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6 mb-4">
+                    <div class="card stat-card">
+                        <div class="card-body">
+                            <div class="stat-icon" style="background: #28a745;">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <h6 class="text-muted">Stock Disponible</h6>
+                            <h3 id="totalStock">0</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6 mb-4">
+                    <div class="card stat-card">
+                        <div class="card-body">
+                            <div class="stat-icon" style="background: #ffc107;">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                            <h6 class="text-muted">Stock Bajo</h6>
+                            <h3 id="stockBajo">0</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6 mb-4">
+                    <div class="card stat-card">
+                        <div class="card-body">
+                            <div class="stat-icon" style="background: #dc3545;">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <h6 class="text-muted">Usuarios Activos</h6>
+                            <h3 id="totalUsuarios">0</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CHARTS -->
+            <div class="row mt-5">
+                <div class="col-lg-6 mb-4">
+                    <div class="card">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0"><i class="fas fa-chart-pie"></i> Productos por Categoría</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="chartCategories"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6 mb-4">
+                    <div class="card">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0"><i class="fas fa-chart-bar"></i> Distribución de Stock</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="chartStock"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TOP PRODUCTS -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0"><i class="fas fa-list"></i> Últimos Productos</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="topProductsList" class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Producto</th>
+                                            <th>SKU</th>
+                                            <th>Categoría</th>
+                                            <th>Precio</th>
+                                            <th>Stock</th>
+                                            <th>Estado</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="topProductsBody">
+                                        <tr><td colspan="6" class="text-center text-muted">Cargando...</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PRODUCTOS PAGE -->
+        <div id="productosPage" class="page-content" style="display: none;">
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <h2 class="page-title"><i class="fas fa-boxes"></i> Productos</h2>
+                </div>
+                <div class="col-md-6 text-end">
+                    <button class="btn btn-primary" id="btnNuevoProducto" style="display: none;">
+                        <i class="fas fa-plus"></i> Nuevo Producto
+                    </button>
+                </div>
+            </div>
+
+            <!-- SEARCH & FILTER -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <input type="text" class="form-control" id="searchProductos" placeholder="Buscar producto...">
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select" id="filterCategoria">
+                                <option value="">Todas las categorías</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PRODUCTOS TABLE -->
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Producto</th>
+                                    <th>SKU</th>
+                                    <th>Categoría</th>
+                                    <th>Precio</th>
+                                    <th>Stock</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="productosTableBody">
+                                <tr><td colspan="6" class="text-center text-muted">Cargando...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <nav aria-label="Paginación" id="productosPagination"></nav>
+                </div>
+            </div>
+        </div>
+
+        <!-- INVENTARIO PAGE -->
+        <div id="inventarioPage" class="page-content" style="display: none;">
+            <div class="row mb-4">
+                <div class="col-12">
+                    <h2 class="page-title"><i class="fas fa-archive"></i> Inventario</h2>
+                </div>
+            </div>
+
+            <!-- STOCK BAJO ALERT -->
+            <div id="stockBajoAlert" class="alert alert-warning" style="display: none;">
+                <i class="fas fa-exclamation-circle"></i> 
+                Hay <span id="stockBajoCount">0</span> productos con stock bajo
+            </div>
+
+            <!-- INVENTARIO TABLE -->
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Producto</th>
+                                    <th>Disponible</th>
+                                    <th>Reservado</th>
+                                    <th>Mínimo</th>
+                                    <th>Máximo</th>
+                                    <th>Ubicación</th>
+                                    <th style="display: none;">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inventarioTableBody">
+                                <tr><td colspan="7" class="text-center text-muted">Cargando...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- USUARIOS PAGE -->
+        <div id="usuariosPage" class="page-content" style="display: none;">
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <h2 class="page-title"><i class="fas fa-users"></i> Usuarios</h2>
+                </div>
+                <div class="col-md-6 text-end">
+                    <button class="btn btn-primary" id="btnNuevoUsuario" style="display: none;">
+                        <i class="fas fa-plus"></i> Nuevo Usuario
+                    </button>
+                </div>
+            </div>
+
+            <!-- USUARIOS TABLE -->
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Nombre</th>
+                                    <th>Email</th>
+                                    <th>Rol</th>
+                                    <th>Estado</th>
+                                    <th style="display: none;">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usuariosTableBody">
+                                <tr><td colspan="5" class="text-center text-muted">Cargando...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- API Module -->
+    <script src="assets/js/api.js"></script>
+    <!-- Main App -->
+    <script src="assets/js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,30 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /proyectoweb/php-api/
+
+    # Eliminar index.php de la URL
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^(.*)$ index.php/$1 [L]
+
+    # Prevenir acceso directo a directorios
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^(.+) - [F]
+
+    # Prevenir acceso directo a archivos
+    RewriteCond %{REQUEST_FILENAME} -f
+    RewriteRule ^(.+) - [F]
+</IfModule>
+
+# Deshabilitar listar directorios
+<IfModule mod_autoindex.c>
+    Options -Indexes
+</IfModule>
+
+# Headers de seguridad
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set X-XSS-Protection "1; mode=block"
+    Header set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+</IfModule>
