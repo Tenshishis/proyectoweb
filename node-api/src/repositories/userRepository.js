@@ -19,11 +19,11 @@ class UserRepository {
   }
 
   async findNonAdminUsers() {
-    return User.find({ rol: { $ne: 'ADMIN' } }).select('username email rol');
+    return User.find({ rol: { $ne: 'ADMIN' } }).select('nombre username email rol');
   }
 
   async findAllUsers() {
-    return User.find({}).select('username email rol');
+    return User.find({}).select('nombre username email rol');
   }
 
   async deleteById(userId) {

@@ -14,6 +14,7 @@
         <table class="table table-striped" id="usersTable">
           <thead>
             <tr>
+              <th>Nombre</th>
               <th>Usuario</th>
               <th>Email</th>
               <th>ID</th>
@@ -59,6 +60,7 @@
           users.forEach(u => {
             const tr = document.createElement('tr');
             tr.innerHTML = `
+              <td>${u.nombre || u.name || ''}</td>
               <td>${u.username || ''}</td>
               <td>${u.email || ''}</td>
               <td>${u._id || u.id || ''}</td>
@@ -95,7 +97,7 @@
                 });
                 const json = await r.json();
                 if (r.ok) {
-                  tr.cells[3].innerText = json.user.rol || nuevoRol;
+                  tr.cells[4].innerText = json.user.rol || nuevoRol;
                   alert('Rol asignado correctamente');
                 } else {
                   alert(json.error || 'Error');
@@ -108,8 +110,8 @@
               }
             });
 
-            tr.children[4].appendChild(select);
-            const actionCell = tr.children[5];
+            tr.children[5].appendChild(select);
+            const actionCell = tr.children[6];
             actionCell.appendChild(btn);
 
             // delete button
