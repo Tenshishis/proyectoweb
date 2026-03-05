@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  </head>
+  <body>
+    <div class="container mt-5">
+      <h1>Panel de administrador</h1>
+      <p>Aquí puedes asignar roles a los usuarios.</p>
+      <div id="usersContainer" class="mt-3">
+        <table class="table table-striped" id="usersTable">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Usuario</th>
+              <th>Email</th>
+              <th>ID</th>
+              <th>Rol actual</th>
+              <th>Nuevo rol</th>
+              <th>Acción</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <script>
+        const roles = ['ADMIN','VENDEDOR','CONSULTOR'];
+
+        function getToken() {
+          const cookieToken = document.cookie.split('; ').find(row => row.startsWith('token='));
+          return cookieToken ? cookieToken.split('=')[1] : null;
+        }
+
+        async function fetchUsers() {
+          try {
+            const token = getToken();
+            const res = await fetch('http://localhost:4000/api/admin/users', {
+              headers: { 'Authorization': 'Bearer ' + token }
+            });
+            if (!res.ok) {
+              const txt = await res.text();
+              document.getElementById('usersContainer').innerText = 'Error fetching users: ' + res.status + ' - ' + txt;
+              return;
+            }
+            const data = await res.json();
+            renderTable(data.users || []);
+          } catch (err) {
+            document.getElementById('usersContainer').innerText = 'Network or CORS error: ' + err.message;
+            console.error('fetchUsers error', err);
+          }
+        }
+
+        function renderTable(users) {
+          const tbody = document.querySelector('#usersTable tbody');
+          tbody.innerHTML = '';
+          users.forEach(u => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td>${u.nombre || u.name || ''}</td>
+              <td>${u.username || ''}</td>
+              <td>${u.email || ''}</td>
+              <td>${u._id || u.id || ''}</td>
+              <td>${u.rol || 'Sin rol'}</td>
+              <td></td>
+              <td></td>
+            `;
+
+            const select = document.createElement('select');
+            select.className = 'form-select form-select-sm';
+            roles.forEach(r => {
+              const opt = document.createElement('option');
+              opt.value = r;
+              opt.text = r;
+              select.appendChild(opt);
+            });
+
+            const btn = document.createElement('button');
+            btn.className = 'btn btn-sm btn-primary me-1';
+            btn.innerText = 'Asignar';
+            btn.addEventListener('click', async () => {
+              try {
+                btn.disabled = true;
+                const nuevoRol = select.value;
+                const token = getToken();
+                const body = { userId: u._id || u.id, nuevoRol };
+                const r = await fetch('http://localhost:4000/api/admin/asignar-rol', {
+                  method: 'PUT',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token
+                  },
+                  body: JSON.stringify(body)
+                });
+                const json = await r.json();
+                if (r.ok) {
+                  tr.cells[4].innerText = json.user.rol || nuevoRol;
+                  alert('Rol asignado correctamente');
+                } else {
+                  alert(json.error || 'Error');
+                }
+              } catch (err) {
+                console.error('assign role error', err);
+                alert('Network or CORS error: ' + err.message);
+              } finally {
+                btn.disabled = false;
+              }
+            });
+
+            tr.children[5].appendChild(select);
+            const actionCell = tr.children[6];
+            actionCell.appendChild(btn);
+
+            // delete button
+            const del = document.createElement('button');
+            del.className = 'btn btn-sm btn-danger';
+            del.innerText = 'Eliminar';
+            del.addEventListener('click', async () => {
+              if (!confirm('Eliminar usuario ' + (u.username || '') + '?')) return;
+              try {
+                del.disabled = true;
+                const token = getToken();
+                const id = u._id || u.id;
+                const r = await fetch('http://localhost:4000/api/admin/users/' + id, {
+                  method: 'DELETE',
+                  headers: { 'Authorization': 'Bearer ' + token }
+                });
+                const json = await r.json();
+                if (r.ok) {
+                  tr.remove();
+                  alert(json.message || 'Usuario eliminado');
+                } else {
+                  alert(json.error || 'Error eliminando usuario');
+                }
+              } catch (err) {
+                console.error('delete error', err);
+                alert('Network error: ' + err.message);
+              } finally {
+                del.disabled = false;
+              }
+            });
+
+            actionCell.appendChild(del);
+            tbody.appendChild(tr);
+          });
+        }
+
+        // init
+        fetchUsers();
+      </script>
+    </div>
+  </body>
+</html>
