@@ -8,14 +8,291 @@
 </head>
 <body class="bg-light">
     <div class="container py-5">
-        <div class="row justify-content-center">
-            <div class="col-md-8">
+        <div class="row justify-content-center g-4">
+            <div class="col-lg-10">
+                <div class="card shadow p-4 mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h2 class="mb-0">Panel de Vendedor</h2>
+                        <button id="refresh-all" class="btn btn-outline-secondary btn-sm">Actualizar</button>
+                    </div>
+                    <div id="status" class="alert d-none" role="alert"></div>
+
+                    <h5 class="mb-3">Productos disponibles</h5>
+                    <div class="table-responsive mb-3">
+                        <table class="table table-striped align-middle" id="productos-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Nombre</th>
+                                    <th>Precio</th>
+                                    <th>Stock</th>
+                                    <th>Cantidad</th>
+                                    <th>Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+
+                    <h5 class="mb-3">Venta actual</h5>
+                    <div class="table-responsive mb-3">
+                        <table class="table table-bordered align-middle" id="carrito-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Producto</th>
+                                    <th>Cantidad</th>
+                                    <th>Precio unitario</th>
+                                    <th>Subtotal</th>
+                                    <th>Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td colspan="6" class="text-center text-muted">Sin productos agregados</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center">
+                        <strong>Total: $<span id="carrito-total">0.00</span></strong>
+                        <button id="crear-venta" class="btn btn-primary">Registrar venta</button>
+                    </div>
+                </div>
+
                 <div class="card shadow p-4">
-                    <h2 class="mb-4">Panel de Vendedor</h2>
-                    <p>Aquí podrás gestionar ventas. (Placeholder)</p>
+                    <h5 class="mb-3">Mis ventas</h5>
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="ventas-table">
+                            <thead>
+                                <tr>
+                                    <th>ID Venta</th>
+                                    <th>Fecha</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td colspan="3" class="text-center text-muted">Cargando...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <script>
+        const productosTableBody = document.querySelector('#productos-table tbody');
+        const carritoTableBody = document.querySelector('#carrito-table tbody');
+        const ventasTableBody = document.querySelector('#ventas-table tbody');
+        const carritoTotal = document.getElementById('carrito-total');
+        const statusBox = document.getElementById('status');
+
+        let productosDisponibles = [];
+        let carrito = [];
+
+        function showStatus(message, type = 'success') {
+            statusBox.className = `alert alert-${type}`;
+            statusBox.textContent = message;
+            statusBox.classList.remove('d-none');
+        }
+
+        function clearStatus() {
+            statusBox.classList.add('d-none');
+            statusBox.textContent = '';
+        }
+
+        function formatCurrency(value) {
+            return Number(value || 0).toFixed(2);
+        }
+
+        async function fetchJson(url, options = {}) {
+            const res = await fetch(url, {
+                credentials: 'same-origin',
+                ...options
+            });
+
+            let data = {};
+            try {
+                data = await res.json();
+            } catch (_) {
+                data = {};
+            }
+
+            if (!res.ok) {
+                const message = data.error || data.message || 'Error en la solicitud';
+                throw new Error(message);
+            }
+
+            return data;
+        }
+
+        async function loadProductos() {
+            const data = await fetchJson('/api/productos');
+            productosDisponibles = data.productos || [];
+
+            if (!productosDisponibles.length) {
+                productosTableBody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No hay productos activos</td></tr>';
+                return;
+            }
+
+            productosTableBody.innerHTML = productosDisponibles.map((producto) => `
+                <tr>
+                    <td>${producto.id}</td>
+                    <td>${producto.nombre}</td>
+                    <td>$${formatCurrency(producto.precio)}</td>
+                    <td>${producto.stock}</td>
+                    <td style="max-width:120px">
+                        <input type="number" min="1" max="${producto.stock}" class="form-control form-control-sm" id="qty-${producto.id}" value="1" ${producto.stock < 1 ? 'disabled' : ''}>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" onclick="agregarAlCarrito(${producto.id})" ${producto.stock < 1 ? 'disabled' : ''}>Agregar</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function agregarAlCarrito(productoId) {
+            clearStatus();
+            const producto = productosDisponibles.find((item) => Number(item.id) === Number(productoId));
+            if (!producto) {
+                showStatus('Producto no encontrado', 'danger');
+                return;
+            }
+
+            const qtyInput = document.getElementById(`qty-${productoId}`);
+            const cantidad = Number(qtyInput ? qtyInput.value : 0);
+
+            if (!Number.isInteger(cantidad) || cantidad <= 0) {
+                showStatus('Ingresa una cantidad válida', 'warning');
+                return;
+            }
+
+            if (cantidad > Number(producto.stock)) {
+                showStatus(`Stock insuficiente para ${producto.nombre}`, 'warning');
+                return;
+            }
+
+            const existente = carrito.find((item) => Number(item.id_producto) === Number(producto.id));
+            const cantidadTotal = (existente ? existente.cantidad : 0) + cantidad;
+
+            if (cantidadTotal > Number(producto.stock)) {
+                showStatus(`No puedes superar el stock disponible de ${producto.nombre}`, 'warning');
+                return;
+            }
+
+            if (existente) {
+                existente.cantidad = cantidadTotal;
+            } else {
+                carrito.push({
+                    id_producto: Number(producto.id),
+                    nombre: producto.nombre,
+                    precio_unitario: Number(producto.precio),
+                    cantidad
+                });
+            }
+
+            renderCarrito();
+        }
+
+        function eliminarDelCarrito(productoId) {
+            carrito = carrito.filter((item) => Number(item.id_producto) !== Number(productoId));
+            renderCarrito();
+        }
+
+        function renderCarrito() {
+            if (!carrito.length) {
+                carritoTableBody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Sin productos agregados</td></tr>';
+                carritoTotal.textContent = '0.00';
+                return;
+            }
+
+            let total = 0;
+            carritoTableBody.innerHTML = carrito.map((item) => {
+                const subtotal = Number(item.precio_unitario) * Number(item.cantidad);
+                total += subtotal;
+                return `
+                    <tr>
+                        <td>${item.id_producto}</td>
+                        <td>${item.nombre}</td>
+                        <td>${item.cantidad}</td>
+                        <td>$${formatCurrency(item.precio_unitario)}</td>
+                        <td>$${formatCurrency(subtotal)}</td>
+                        <td><button class="btn btn-sm btn-outline-danger" onclick="eliminarDelCarrito(${item.id_producto})">Quitar</button></td>
+                    </tr>
+                `;
+            }).join('');
+
+            carritoTotal.textContent = formatCurrency(total);
+        }
+
+        async function crearVenta() {
+            clearStatus();
+            if (!carrito.length) {
+                showStatus('Agrega al menos un producto para registrar la venta', 'warning');
+                return;
+            }
+
+            const payload = {
+                productos: carrito.map((item) => ({
+                    id_producto: Number(item.id_producto),
+                    cantidad: Number(item.cantidad)
+                }))
+            };
+
+            await fetchJson('/api/ventas', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            carrito = [];
+            renderCarrito();
+            showStatus('Venta registrada correctamente', 'success');
+            await Promise.all([loadProductos(), loadVentas()]);
+        }
+
+        async function loadVentas() {
+            const data = await fetchJson('/api/ventas');
+            const ventas = data.ventas || [];
+
+            if (!ventas.length) {
+                ventasTableBody.innerHTML = '<tr><td colspan="3" class="text-center text-muted">No tienes ventas registradas</td></tr>';
+                return;
+            }
+
+            ventasTableBody.innerHTML = ventas.map((venta) => `
+                <tr>
+                    <td>${venta.id}</td>
+                    <td>${new Date(venta.fecha).toLocaleString()}</td>
+                    <td>$${formatCurrency(venta.total)}</td>
+                </tr>
+            `).join('');
+        }
+
+        async function init() {
+            try {
+                clearStatus();
+                await Promise.all([loadProductos(), loadVentas()]);
+                renderCarrito();
+            } catch (error) {
+                showStatus(error.message, 'danger');
+            }
+        }
+
+        document.getElementById('crear-venta').addEventListener('click', async () => {
+            try {
+                await crearVenta();
+            } catch (error) {
+                showStatus(error.message, 'danger');
+            }
+        });
+
+        document.getElementById('refresh-all').addEventListener('click', init);
+
+        window.agregarAlCarrito = agregarAlCarrito;
+        window.eliminarDelCarrito = eliminarDelCarrito;
+
+        init();
+    </script>
 </body>
 </html>
