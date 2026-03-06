@@ -13,6 +13,15 @@ exports.listar = async (req, res) => {
   }
 };
 
+exports.listarAdmin = async (req, res) => {
+  try {
+    const productos = await productoService.listarAdmin();
+    res.json({ productos });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
 exports.obtenerPorId = async (req, res) => {
   try {
     const producto = await productoService.obtenerPorId(req.params.id);
@@ -74,6 +83,16 @@ exports.agregarStock = async (req, res) => {
     const { cantidad } = req.body;
     const producto = await productoService.agregarStock(req.params.id, cantidad);
     res.json({ message: 'Stock actualizado', producto });
+  } catch (err) {
+    res.status(err.status || 400).json({ error: err.message });
+  }
+};
+
+exports.reactivarConStock = async (req, res) => {
+  try {
+    const { cantidad } = req.body;
+    const producto = await productoService.reactivarConStock(req.params.id, cantidad);
+    res.json({ message: 'Producto reactivado y stock agregado', producto });
   } catch (err) {
     res.status(err.status || 400).json({ error: err.message });
   }

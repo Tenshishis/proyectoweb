@@ -5,6 +5,10 @@ class ProductoService {
     return productoRepo.getAll();
   }
 
+  async listarAdmin() {
+    return productoRepo.getAllForAdmin();
+  }
+
   async obtenerPorId(id) {
     const producto = await productoRepo.getById(id);
     if (!producto || !producto.activo) {
@@ -56,6 +60,24 @@ class ProductoService {
     }
 
     const producto = await productoRepo.incrementStock(id, cantidadNumerica);
+    if (!producto) {
+      const error = new Error('Producto no encontrado');
+      error.status = 404;
+      throw error;
+    }
+
+    return producto;
+  }
+
+  async reactivarConStock(id, cantidad) {
+    const cantidadNumerica = Number(cantidad);
+    if (!Number.isInteger(cantidadNumerica) || cantidadNumerica <= 0) {
+      const error = new Error('Debes indicar una cantidad de stock mayor que 0 para reactivar');
+      error.status = 400;
+      throw error;
+    }
+
+    const producto = await productoRepo.reactivateAndAddStock(id, cantidadNumerica);
     if (!producto) {
       const error = new Error('Producto no encontrado');
       error.status = 404;

@@ -41,7 +41,8 @@
                         </div>
                     </form>
 
-                    <div class="table-responsive">
+                    <h5 class="mb-3">Productos activos</h5>
+                    <div class="table-responsive mb-4">
                         <table class="table table-striped align-middle" id="productos-table">
                             <thead>
                                 <tr>
@@ -59,6 +60,25 @@
                             </tbody>
                         </table>
                     </div>
+
+                    <h5 class="mb-3">Productos inactivos</h5>
+                    <div class="table-responsive">
+                        <table class="table table-striped align-middle" id="productos-inactivos-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Nombre</th>
+                                    <th>Categoría</th>
+                                    <th>Precio</th>
+                                    <th>Stock actual</th>
+                                    <th>Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td colspan="6" class="text-center text-muted">Cargando...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -66,6 +86,7 @@
 
     <script>
         const tableBody = document.querySelector('#productos-table tbody');
+        const inactiveTableBody = document.querySelector('#productos-inactivos-table tbody');
         const statusBox = document.getElementById('status');
         const nuevoProductoForm = document.getElementById('nuevo-producto-form');
 
@@ -121,32 +142,75 @@
         }
 
         async function loadProductos() {
-            const data = await fetchJson('/api/productos');
+            const data = await fetchJson('/api/productos/admin/todos');
             const productos = data.productos || [];
+            const activos = productos.filter((producto) => producto.activo);
+            const inactivos = productos.filter((producto) => !producto.activo);
 
-            if (!productos.length) {
+            if (!activos.length) {
                 tableBody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No hay productos activos</td></tr>';
+            } else {
+                tableBody.innerHTML = activos.map((producto) => `
+                    <tr>
+                        <td>${producto.id}</td>
+                        <td>${producto.nombre}</td>
+                        <td>${producto.categoria || 'General'}</td>
+                        <td>$${formatCurrency(producto.precio)}</td>
+                        <td><strong>${producto.stock}</strong></td>
+                        <td style="max-width:140px;">
+                            <input type="number" min="1" class="form-control form-control-sm" id="add-${producto.id}" value="1">
+                        </td>
+                        <td>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-sm btn-primary" onclick="agregarStock(${producto.id})">Agregar</button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="desactivarProducto(${producto.id})">Desactivar</button>
+                            </div>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+
+            if (!inactivos.length) {
+                inactiveTableBody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No hay productos inactivos</td></tr>';
+            } else {
+                inactiveTableBody.innerHTML = inactivos.map((producto) => `
+                    <tr>
+                        <td>${producto.id}</td>
+                        <td>${producto.nombre}</td>
+                        <td>${producto.categoria || 'General'}</td>
+                        <td>$${formatCurrency(producto.precio)}</td>
+                        <td><strong>${producto.stock}</strong></td>
+                        <td>
+                            <button class="btn btn-sm btn-success" onclick="reactivarProducto(${producto.id})">Reactivar</button>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+        }
+
+        async function reactivarProducto(productoId) {
+            clearStatus();
+            const entrada = prompt('¿Cuánto stock deseas agregar para reactivar este producto?', '1');
+            if (entrada === null) return;
+
+            const cantidad = Number(entrada);
+            if (!Number.isInteger(cantidad) || cantidad <= 0) {
+                showStatus('La cantidad para reactivar debe ser un entero mayor que 0', 'warning');
                 return;
             }
 
-            tableBody.innerHTML = productos.map((producto) => `
-                <tr>
-                    <td>${producto.id}</td>
-                    <td>${producto.nombre}</td>
-                    <td>${producto.categoria || 'General'}</td>
-                    <td>$${formatCurrency(producto.precio)}</td>
-                    <td><strong>${producto.stock}</strong></td>
-                    <td style="max-width:140px;">
-                        <input type="number" min="1" class="form-control form-control-sm" id="add-${producto.id}" value="1">
-                    </td>
-                    <td>
-                        <div class="d-flex gap-2">
-                            <button class="btn btn-sm btn-primary" onclick="agregarStock(${producto.id})">Agregar</button>
-                            <button class="btn btn-sm btn-outline-danger" onclick="desactivarProducto(${producto.id})">Desactivar</button>
-                        </div>
-                    </td>
-                </tr>
-            `).join('');
+            try {
+                await fetchJson(`/api/productos/${productoId}/reactivar`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ cantidad })
+                });
+
+                showStatus('Producto reactivado correctamente', 'success');
+                await loadProductos();
+            } catch (error) {
+                showStatus(error.message, 'danger');
+            }
         }
 
         async function desactivarProducto(productoId) {
@@ -236,6 +300,7 @@
 
         window.agregarStock = agregarStock;
         window.desactivarProducto = desactivarProducto;
+        window.reactivarProducto = reactivarProducto;
         nuevoProductoForm.addEventListener('submit', crearProducto);
 
         (async function init() {

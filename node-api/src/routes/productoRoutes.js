@@ -6,6 +6,7 @@ const { verifyToken } = require('../middleware/authMiddleware');
 const { authorize } = require('../middleware/roleMiddleware');
 
 router.get('/', verifyToken, authorize('ADMIN', 'VENDEDOR', 'CONSULTOR'), productoController.listar);
+router.get('/admin/todos', verifyToken, authorize('ADMIN'), productoController.listarAdmin);
 router.get('/search/:keyword', verifyToken, authorize('ADMIN', 'VENDEDOR', 'CONSULTOR'), productoController.buscar);
 router.get('/categoria/:categoria', verifyToken, authorize('ADMIN', 'VENDEDOR', 'CONSULTOR'), productoController.listarPorCategoria);
 router.get('/:id', verifyToken, authorize('ADMIN', 'VENDEDOR', 'CONSULTOR'), productoController.obtenerPorId);
@@ -13,6 +14,7 @@ router.get('/:id', verifyToken, authorize('ADMIN', 'VENDEDOR', 'CONSULTOR'), pro
 router.post('/', verifyToken, authorize('ADMIN'), productoController.crear);
 router.put('/:id', verifyToken, authorize('ADMIN'), productoController.actualizar);
 router.patch('/:id/stock', verifyToken, authorize('ADMIN'), productoController.agregarStock);
+router.patch('/:id/reactivar', verifyToken, authorize('ADMIN'), productoController.reactivarConStock);
 router.delete('/:id', verifyToken, authorize('ADMIN'), productoController.eliminar);
 
 module.exports = router;

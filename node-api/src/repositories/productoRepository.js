@@ -11,6 +11,15 @@ class ProductoRepository {
     return rows;
   }
 
+  async getAllForAdmin() {
+    const { rows } = await db.query(
+      `SELECT id, nombre, descripcion, precio, categoria, stock, activo, created_at, updated_at
+       FROM productos
+       ORDER BY id DESC`
+    );
+    return rows;
+  }
+
   async getById(id) {
     const { rows } = await db.query(
       `SELECT id, nombre, descripcion, precio, categoria, stock, activo, created_at, updated_at
@@ -109,6 +118,18 @@ class ProductoRepository {
     const { rows } = await db.query(
       `UPDATE productos
        SET stock = stock + $2
+       WHERE id = $1
+       RETURNING id, nombre, descripcion, precio, categoria, stock, activo, created_at, updated_at`,
+      [id, cantidad]
+    );
+    return rows[0] || null;
+  }
+
+  async reactivateAndAddStock(id, cantidad) {
+    const { rows } = await db.query(
+      `UPDATE productos
+       SET activo = TRUE,
+           stock = stock + $2
        WHERE id = $1
        RETURNING id, nombre, descripcion, precio, categoria, stock, activo, created_at, updated_at`,
       [id, cantidad]
