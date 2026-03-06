@@ -12,6 +12,7 @@ router.get('/:id', verifyToken, authorize('ADMIN', 'VENDEDOR', 'CONSULTOR'), pro
 
 router.post('/', verifyToken, authorize('ADMIN'), productoController.crear);
 router.put('/:id', verifyToken, authorize('ADMIN'), productoController.actualizar);
+router.patch('/:id/stock', verifyToken, authorize('ADMIN'), productoController.agregarStock);
 router.delete('/:id', verifyToken, authorize('ADMIN'), productoController.eliminar);
 
 module.exports = router;

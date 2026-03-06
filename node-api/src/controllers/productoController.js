@@ -68,3 +68,13 @@ exports.eliminar = async (req, res) => {
     res.status(err.status || 500).json({ error: err.message });
   }
 };
+
+exports.agregarStock = async (req, res) => {
+  try {
+    const { cantidad } = req.body;
+    const producto = await productoService.agregarStock(req.params.id, cantidad);
+    res.json({ message: 'Stock actualizado', producto });
+  } catch (err) {
+    res.status(err.status || 400).json({ error: err.message });
+  }
+};

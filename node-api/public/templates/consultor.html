@@ -55,6 +55,7 @@
                     <div class="mt-3">
                         <button id="aplicar-filtros" class="btn btn-primary btn-sm">Aplicar filtros</button>
                         <button id="limpiar-filtros" class="btn btn-outline-secondary btn-sm">Limpiar</button>
+                        <button id="exportar-csv-usuario" class="btn btn-success btn-sm">Exportar CSV por usuario</button>
                     </div>
                 </div>
 
@@ -177,6 +178,60 @@
             document.getElementById('kpi-ingresos').textContent = `$${formatCurrency(ingresos)}`;
         }
 
+        function getFilteredVentas() {
+            const desde = filtroDesde.value ? new Date(`${filtroDesde.value}T00:00:00`) : null;
+            const hasta = filtroHasta.value ? new Date(`${filtroHasta.value}T23:59:59`) : null;
+            const texto = filtroTexto.value.trim().toLowerCase();
+
+            return ventasCache.filter((venta) => {
+                const fechaVenta = new Date(venta.fecha);
+                if (desde && fechaVenta < desde) return false;
+                if (hasta && fechaVenta > hasta) return false;
+                if (texto && !String(venta.usuario_id || '').toLowerCase().includes(texto)) return false;
+                return true;
+            });
+        }
+
+        function exportarCsvPorUsuario() {
+            clearStatus();
+            const usuarioFiltro = filtroTexto.value.trim();
+
+            if (!usuarioFiltro) {
+                showStatus('Para exportar por usuario, primero escribe un ID de usuario en el filtro.', 'warning');
+                return;
+            }
+
+            const ventasFiltradas = getFilteredVentas();
+            if (!ventasFiltradas.length) {
+                showStatus('No hay ventas para exportar con ese usuario/filtros.', 'warning');
+                return;
+            }
+
+            const headers = ['venta_id', 'fecha', 'usuario_id', 'total'];
+            const rows = ventasFiltradas.map((venta) => [
+                venta.id,
+                new Date(venta.fecha).toISOString(),
+                venta.usuario_id || '',
+                Number(venta.total || 0).toFixed(2)
+            ]);
+
+            const csvContent = [headers, ...rows]
+                .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+                .join('\n');
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `reporte_ventas_usuario_${usuarioFiltro}_${new Date().toISOString().slice(0, 10)}.csv`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+
+            showStatus(`CSV exportado (${ventasFiltradas.length} ventas)`, 'success');
+        }
+
         async function init() {
             try {
                 clearStatus();
@@ -199,6 +254,7 @@
         document.getElementById('aplicar-filtros').addEventListener('click', applyFilters);
         document.getElementById('limpiar-filtros').addEventListener('click', clearFilters);
         document.getElementById('refresh-all').addEventListener('click', init);
+        document.getElementById('exportar-csv-usuario').addEventListener('click', exportarCsvPorUsuario);
 
         init();
     </script>

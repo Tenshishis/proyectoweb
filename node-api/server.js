@@ -40,6 +40,13 @@ app.get('/admin/users', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'templates', 'admin_users.html'));
 });
 
+// Serve admin product stock page (only for admin)
+app.get('/admin/productos', (req, res) => {
+  const user = getUserFromCookie(req);
+  if (!user || user.rol !== 'ADMIN') return res.status(403).send('<h3>No autorizado</h3>');
+  res.sendFile(path.join(__dirname, 'public', 'templates', 'admin_productos.html'));
+});
+
 // Serve static files (Bootstrap CDN used, but for images/assets if needed)
 app.use('/static', express.static(path.join(__dirname, 'public')));
 

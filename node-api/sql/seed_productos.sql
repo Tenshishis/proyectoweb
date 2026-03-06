@@ -1,0 +1,41 @@
+INSERT INTO productos (id, nombre, precio, descripcion, categoria, stock, activo)
+VALUES
+  (1, 'Audífonos Bluetooth', 399, 'Audífonos inalámbricos con conexión Bluetooth', 'Electrónica', 25, TRUE),
+  (2, 'Mouse inalámbrico', 249, 'Mouse óptico inalámbrico para computadora', 'Electrónica', 40, TRUE),
+  (3, 'Teclado mecánico', 899, 'Teclado mecánico con iluminación RGB', 'Electrónica', 15, TRUE),
+  (4, 'Memoria USB 64GB', 199, 'Memoria USB de alta velocidad 64GB', 'Electrónica', 50, TRUE),
+  (5, 'Bocina Bluetooth', 499, 'Bocina portátil con conexión Bluetooth', 'Electrónica', 30, TRUE),
+  (6, 'Cable USB-C', 120, 'Cable de carga rápida USB tipo C', 'Electrónica', 60, TRUE),
+  (7, 'Soporte para laptop', 350, 'Soporte ergonómico para computadora portátil', 'Accesorios', 20, TRUE),
+  (8, 'Power Bank 10000mAh', 450, 'Batería portátil para cargar dispositivos móviles', 'Electrónica', 35, TRUE),
+  (9, 'Funda para celular', 150, 'Funda protectora para smartphone', 'Accesorios', 70, TRUE),
+  (10, 'Protector de pantalla', 100, 'Protector de vidrio templado para celular', 'Accesorios', 80, TRUE),
+  (11, 'Soporte para celular', 180, 'Base ajustable para sostener smartphone', 'Accesorios', 45, TRUE),
+  (12, 'Adaptador HDMI', 220, 'Adaptador para conectar dispositivos HDMI', 'Electrónica', 25, TRUE),
+  (13, 'Hub USB 4 puertos', 260, 'Expansor USB con cuatro puertos', 'Electrónica', 20, TRUE),
+  (14, 'Lámpara LED escritorio', 300, 'Lámpara LED con luz ajustable para escritorio', 'Hogar', 18, TRUE),
+  (15, 'Reloj despertador digital', 280, 'Reloj digital con alarma y luz LED', 'Hogar', 22, TRUE),
+  (16, 'Botella térmica', 210, 'Botella de acero inoxidable para bebidas', 'Hogar', 30, TRUE),
+  (17, 'Difusor de aromas', 350, 'Difusor eléctrico para aceites esenciales', 'Hogar', 15, TRUE),
+  (18, 'Juego de tazas', 320, 'Set de 4 tazas de cerámica', 'Hogar', 20, TRUE),
+  (19, 'Almohada ergonómica', 450, 'Almohada diseñada para mejorar postura al dormir', 'Hogar', 12, TRUE),
+  (20, 'Cuaderno profesional', 90, 'Cuaderno tamaño profesional 100 hojas', 'Papelería', 60, TRUE),
+  (21, 'Mochila escolar', 550, 'Mochila resistente con varios compartimentos', 'Papelería', 25, TRUE),
+  (22, 'Calculadora científica', 420, 'Calculadora científica para estudiantes', 'Papelería', 18, TRUE),
+  (23, 'Plumas gel paquete', 80, 'Paquete de 5 plumas de tinta gel', 'Papelería', 75, TRUE),
+  (24, 'Agenda 2026', 160, 'Agenda organizadora para el año 2026', 'Papelería', 40, TRUE),
+  (25, 'Mouse gamer RGB', 650, 'Mouse gamer con iluminación RGB y alta precisión', 'Gaming', 15, TRUE),
+  (26, 'Teclado gamer RGB', 950, 'Teclado gamer mecánico con iluminación RGB', 'Gaming', 10, TRUE),
+  (27, 'Audífonos gamer', 780, 'Audífonos con micrófono para videojuegos', 'Gaming', 14, TRUE),
+  (28, 'Control para PC', 690, 'Control compatible con computadora y juegos', 'Gaming', 12, TRUE),
+  (29, 'Tapete gamer', 300, 'Tapete grande para mouse gamer', 'Gaming', 20, TRUE),
+  (30, 'Soporte para control', 200, 'Base organizadora para control de videojuegos', 'Gaming', 18, TRUE)
+ON CONFLICT (id) DO UPDATE SET
+  nombre = EXCLUDED.nombre,
+  precio = EXCLUDED.precio,
+  descripcion = EXCLUDED.descripcion,
+  categoria = EXCLUDED.categoria,
+  stock = EXCLUDED.stock,
+  activo = EXCLUDED.activo;
+
+SELECT setval('productos_id_seq', (SELECT MAX(id) FROM productos));
