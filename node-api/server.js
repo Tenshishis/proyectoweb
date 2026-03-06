@@ -53,6 +53,27 @@ app.get('/login', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'templates', 'login.html'));
 });
 
+// Serve vendedor page (only for vendedor)
+app.get('/vendedor', (req, res) => {
+  const user = getUserFromCookie(req);
+  if (!user || user.rol !== 'VENDEDOR') return res.status(403).send('<h3>No autorizado</h3>');
+  res.sendFile(path.join(__dirname, 'public', 'templates', 'vendedor.html'));
+});
+
+// Serve consultor page (only for consultor)
+app.get('/consultor', (req, res) => {
+  const user = getUserFromCookie(req);
+  if (!user || user.rol !== 'CONSULTOR') return res.status(403).send('<h3>No autorizado</h3>');
+  res.sendFile(path.join(__dirname, 'public', 'templates', 'consultor.html'));
+});
+
+// Serve waiting-role page (for users without role assigned yet)
+app.get('/espera-rol', (req, res) => {
+  const user = getUserFromCookie(req);
+  if (!user) return res.status(403).send('<h3>No autorizado</h3>');
+  res.sendFile(path.join(__dirname, 'public', 'templates', 'espera_rol.html'));
+});
+
 // Parse request bodies before routes
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
