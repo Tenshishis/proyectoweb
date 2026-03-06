@@ -128,10 +128,10 @@
 
         async function loadProductos() {
             const data = await fetchJson('/api/productos');
-            productosDisponibles = data.productos || [];
+            productosDisponibles = (data.productos || []).filter((producto) => Number(producto.stock) > 0);
 
             if (!productosDisponibles.length) {
-                productosTableBody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No hay productos activos</td></tr>';
+                productosTableBody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No hay productos disponibles para venta</td></tr>';
                 return;
             }
 

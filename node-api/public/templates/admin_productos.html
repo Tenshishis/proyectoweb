@@ -18,6 +18,29 @@
 
                     <div id="status" class="alert d-none" role="alert"></div>
 
+                    <h5 class="mb-3">Agregar nuevo producto</h5>
+                    <form id="nuevo-producto-form" class="row g-3 mb-4">
+                        <div class="col-md-4">
+                            <label for="nuevo-nombre" class="form-label">Nombre</label>
+                            <input type="text" id="nuevo-nombre" class="form-control" required>
+                        </div>
+                        <div class="col-md-2">
+                            <label for="nuevo-precio" class="form-label">Precio</label>
+                            <input type="number" id="nuevo-precio" class="form-control" min="1" step="0.01" required>
+                        </div>
+                        <div class="col-md-2">
+                            <label for="nuevo-stock" class="form-label">Stock inicial</label>
+                            <input type="number" id="nuevo-stock" class="form-control" min="0" step="1" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="nuevo-descripcion" class="form-label">Descripción</label>
+                            <input type="text" id="nuevo-descripcion" class="form-control" placeholder="Opcional">
+                        </div>
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-success btn-sm">Crear producto</button>
+                        </div>
+                    </form>
+
                     <div class="table-responsive">
                         <table class="table table-striped align-middle" id="productos-table">
                             <thead>
@@ -28,7 +51,7 @@
                                     <th>Precio</th>
                                     <th>Stock actual</th>
                                     <th>Agregar stock</th>
-                                    <th>Acción</th>
+                                    <th>Acciones</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -44,6 +67,7 @@
     <script>
         const tableBody = document.querySelector('#productos-table tbody');
         const statusBox = document.getElementById('status');
+        const nuevoProductoForm = document.getElementById('nuevo-producto-form');
 
         function getCookie(name) {
             const value = `; ${document.cookie}`;
@@ -116,10 +140,74 @@
                         <input type="number" min="1" class="form-control form-control-sm" id="add-${producto.id}" value="1">
                     </td>
                     <td>
-                        <button class="btn btn-sm btn-primary" onclick="agregarStock(${producto.id})">Agregar</button>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-sm btn-primary" onclick="agregarStock(${producto.id})">Agregar</button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="desactivarProducto(${producto.id})">Desactivar</button>
+                        </div>
                     </td>
                 </tr>
             `).join('');
+        }
+
+        async function desactivarProducto(productoId) {
+            clearStatus();
+            const confirmar = confirm('¿Seguro que deseas desactivar este producto?');
+            if (!confirmar) return;
+
+            try {
+                await fetchJson(`/api/productos/${productoId}`, {
+                    method: 'DELETE'
+                });
+
+                showStatus('Producto desactivado correctamente', 'success');
+                await loadProductos();
+            } catch (error) {
+                showStatus(error.message, 'danger');
+            }
+        }
+
+        async function crearProducto(event) {
+            event.preventDefault();
+            clearStatus();
+
+            const nombre = document.getElementById('nuevo-nombre').value.trim();
+            const precio = Number(document.getElementById('nuevo-precio').value);
+            const stock = Number(document.getElementById('nuevo-stock').value);
+            const descripcion = document.getElementById('nuevo-descripcion').value.trim();
+
+            if (!nombre) {
+                showStatus('El nombre es obligatorio', 'warning');
+                return;
+            }
+
+            if (!(precio > 0)) {
+                showStatus('El precio debe ser mayor a 0', 'warning');
+                return;
+            }
+
+            if (!Number.isInteger(stock) || stock < 0) {
+                showStatus('El stock debe ser un entero mayor o igual a 0', 'warning');
+                return;
+            }
+
+            try {
+                await fetchJson('/api/productos', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        nombre,
+                        precio,
+                        descripcion,
+                        stock
+                    })
+                });
+
+                nuevoProductoForm.reset();
+                showStatus('Producto creado correctamente', 'success');
+                await loadProductos();
+            } catch (error) {
+                showStatus(error.message, 'danger');
+            }
         }
 
         async function agregarStock(productoId) {
@@ -147,6 +235,8 @@
         }
 
         window.agregarStock = agregarStock;
+        window.desactivarProducto = desactivarProducto;
+        nuevoProductoForm.addEventListener('submit', crearProducto);
 
         (async function init() {
             try {
