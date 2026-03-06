@@ -17,7 +17,14 @@ class AuthService {
       // rol NO se envía, usa default "PENDIENTE"
     });
 
-    return user;
+    return {
+      id: user._id,
+      nombre: user.nombre,
+      username: user.username,
+      email: user.email,
+      rol: user.rol,
+      activo: user.activo
+    };
   }
 
   async login(identifier, password) {

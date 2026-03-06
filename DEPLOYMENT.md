@@ -5,7 +5,7 @@ Este proyecto está configurado para desplegar en **Render**, una plataforma clo
 ## Arquitectura
 
 El proyecto es un **monorepo** con dos servicios independientes:
-- **Backend (node-api)**: Express.js + Node.js + MongoDB
+- **Backend (node-api)**: Express.js + Node.js (Usuarios/Auth en MongoDB + Productos/Ventas/Reportes en PostgreSQL)
 - **Frontend (frontend)**: Flask + Python
 
 Ambos se despliegan como servicios separados en Render.
@@ -14,18 +14,15 @@ Ambos se despliegan como servicios separados en Render.
 
 1. Cuenta en [Render.com](https://render.com)
 2. Repositorio en GitHub (este proyecto ya está configurado)
-3. MongoDB Atlas (base de datos en la nube)
+3. MongoDB Atlas para usuarios/auth
+4. PostgreSQL en Render para productos/ventas/reportes
 
-## Paso 1: Preparar MongoDB Atlas
+## Paso 1: Preparar PostgreSQL en Render
 
-1. Crea una cuenta en [MongoDB Atlas](https://www.mongodb.com/cloud/atlas)
-2. Crea un clúster (la versión free está bien)
-3. Crea un usuario de base de datos y anota las credenciales
-4. Whitelist la IP o permite conexiones desde cualquier lugar (0.0.0.0/0)
-5. Obtén la **connection string**:
-   ```
-   mongodb+srv://<username>:<password>@<cluster>.mongodb.net/<database>?retryWrites=true&w=majority
-   ```
+1. En Render crea una base de datos PostgreSQL.
+2. Espera estado **Available**.
+3. Copia `Internal Database URL` y credenciales `PGHOST/PGPORT/PGDATABASE/PGUSER/PGPASSWORD`.
+4. Ejecuta el esquema SQL en la base (`node-api/sql/schema_postgres.sql`) para crear `reporte_ventas`.
 
 ## Paso 2: Desplegar Backend en Render
 
@@ -48,7 +45,10 @@ Ambos se despliegan como servicios separados en Render.
    - **Start Command**: `npm start`
 4. En **Environment** añade:
    - `PORT`: `4000`
-   - `MONGO_URI`: Tu connection string de MongoDB Atlas
+   - `MONGO_URI`: Tu conexión de MongoDB Atlas
+   - `DATABASE_URL`: Tu Internal Database URL de Render PostgreSQL
+   - `PGHOST`, `PGPORT`, `PGDATABASE`, `PGUSER`, `PGPASSWORD`
+   - `PGSSLMODE`: `require`
    - `JWT_SECRET`: Una contraseña segura (genera una aleatoria)
 5. Haz clic en **Create Web Service**
 
@@ -85,7 +85,14 @@ Ambos se despliegan como servicios separados en Render.
 | Variable | Ejemplo | Descripción |
 |----------|---------|-------------|
 | `PORT` | `4000` | Puerto del servidor Node |
-| `MONGO_URI` | `mongodb+srv://...` | Connection string MongoDB Atlas |
+| `MONGO_URI` | `mongodb+srv://...` | Connection string de MongoDB (usuarios/auth) |
+| `DATABASE_URL` | `postgresql://...` | Connection string interna PostgreSQL |
+| `PGHOST` | `dpg-xxxxx` | Host de PostgreSQL |
+| `PGPORT` | `5432` | Puerto PostgreSQL |
+| `PGDATABASE` | `proyectoweb` | Nombre de base |
+| `PGUSER` | `proyectoweb_user` | Usuario de base |
+| `PGPASSWORD` | `***` | Password de base |
+| `PGSSLMODE` | `require` | Modo SSL |
 | `JWT_SECRET` | `supersecret123` | Contraseña para firmar JWTs |
 
 ### Frontend (frontend)
@@ -102,9 +109,9 @@ Ambos se despliegan como servicios separados en Render.
 - En browser DevTools → Network, chequea si ves errores CORS
 - El backend debe tener CORS habilitado (ya está configurado en `server.js`)
 
-### MongoDB connection error
-- Verifica que `MONGO_URI` está correcta
-- Chequea que MongoDB Atlas tiene whitelisted la IP de Render (o 0.0.0.0/0)
+### PostgreSQL connection error
+- Verifica que `DATABASE_URL` y `PG*` están correctas
+- Confirma que la tabla `reporte_ventas` ya fue creada
 - En Render, mira los logs: Dashboard → tu servicio → Logs
 
 ### Servicio tarda mucho en iniciar
@@ -134,7 +141,7 @@ Simplemente haz `git push` a tu rama default en GitHub. Render automáticamente 
 
 1. Cambia `FLASK_SECRET` a algo seguro
 2. Cambia `JWT_SECRET` a algo seguro
-3. Asegúrate que tu `MONGO_URI` está bajo credenciales seguras
+3. Asegúrate que tu `DATABASE_URL` y `PGPASSWORD` están bajo credenciales seguras
 4. Revisa que la base de datos está con autenticación habilitada
 5. Usa HTTPS siempre (Render lo proporciona por defecto)
 

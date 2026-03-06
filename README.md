@@ -9,11 +9,11 @@ Estructura de carpetas:
 ```
 node-api/
 ├── src/
-│   ├── config/      # Conexión a Mongo
+│   ├── config/      # Conexión a bases de datos
 │   ├── controllers/ # Lógica de request/response
 │   ├── services/    # Reglas de negocio
 │   ├── repositories/ # (vacío, preparado para abstracción)
-│   ├── models/      # Esquemas mongoose
+│   ├── models/      # Modelos MongoDB (usuarios)
 │   ├── middleware/  # JWT y roles
 │   ├── routes/      # Enrutadores de express
 │   ├── validators/  # Joi schemas
@@ -23,7 +23,7 @@ node-api/
 
 ### Configuración
 
-1. Copia `.env` y ajusta `MONGO_URI`, `JWT_SECRET`, etc.
+1. Copia `.env` y ajusta `MONGO_URI`, `DATABASE_URL`/`PG*`, `JWT_SECRET`, etc.
 2. Ejecuta `npm install` dentro de `node-api`.
 3. (Opcional) crea un administrador de pruebas con `npm run seed`.
 4. Inicia con `npm run dev` (usa nodemon) o `npm start`.
@@ -37,7 +37,7 @@ node-api/
 ### Cambios escalables
 
 - Agregar rol: añadir valor a la constante `ROLES` en `src/utils/roles.js`. Los modelos y controladores lo importan automáticamente, así no hay que tocar más código.
-- Cambiar motor de datos: crear repositorios que abstraigan mongoose.
+- Arquitectura actual: Usuarios/Auth en MongoDB, Productos/Ventas/Reportes en PostgreSQL.
 
 ## Frontend (Flask)
 
