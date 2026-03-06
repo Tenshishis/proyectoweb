@@ -5,13 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Administrar Usuarios</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        @media (max-width: 768px) {
+            .users-card { padding: 1rem !important; }
+            .users-title { font-size: 1.35rem; }
+            .table { font-size: 0.9rem; }
+            .actions-wrap .btn { margin-bottom: 0.25rem; }
+        }
+    </style>
 </head>
 <body class="bg-light">
-    <div class="container py-5">
+    <div class="container py-3 py-md-5">
         <div class="row justify-content-center">
-            <div class="col-md-10">
-                <div class="card shadow p-4">
-                    <h2 class="mb-4">Administrar Usuarios</h2>
+            <div class="col-12 col-xl-10">
+                <div class="card shadow p-4 users-card">
+                    <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2 mb-3">
+                        <h2 class="mb-0 users-title">Administrar Usuarios</h2>
+                        <a href="/admin-redirect" class="btn btn-outline-secondary btn-sm">Volver</a>
+                    </div>
                     <div id="users-table"></div>
                 </div>
             </div>
@@ -35,15 +46,15 @@
         });
         const data = await res.json();
         const users = data.users || data;
-        let html = `<table class='table'><thead><tr><th>Nombre</th><th>Usuario</th><th>Email</th><th>Rol</th><th>Acciones</th></tr></thead><tbody>`;
+        let html = `<div class='table-responsive'><table class='table align-middle'><thead><tr><th>Nombre</th><th>Usuario</th><th>Email</th><th>Rol</th><th>Acciones</th></tr></thead><tbody>`;
         for (const user of users) {
             html += `<tr><td>${user.nombre || ''}</td><td>${user.username || ''}</td><td>${user.email || ''}</td><td>${user.rol || 'Sin rol'}</td>`;
-            html += `<td><button onclick=\"assignRole('${user._id}','ADMIN')\" class='btn btn-sm btn-success me-1'>Admin</button>`;
-            html += `<button onclick=\"assignRole('${user._id}','VENDEDOR')\" class='btn btn-sm btn-primary me-1'>Vendedor</button>`;
-            html += `<button onclick=\"assignRole('${user._id}','CONSULTOR')\" class='btn btn-sm btn-warning me-1'>Consultor</button>`;
-            html += `<button onclick=\"deleteUser('${user._id}')\" class='btn btn-sm btn-danger'>Eliminar</button></td></tr>`;
+            html += `<td><div class='actions-wrap d-flex flex-wrap gap-1'><button onclick=\"assignRole('${user._id}','ADMIN')\" class='btn btn-sm btn-success'>Admin</button>`;
+            html += `<button onclick=\"assignRole('${user._id}','VENDEDOR')\" class='btn btn-sm btn-primary'>Vendedor</button>`;
+            html += `<button onclick=\"assignRole('${user._id}','CONSULTOR')\" class='btn btn-sm btn-warning'>Consultor</button>`;
+            html += `<button onclick=\"deleteUser('${user._id}')\" class='btn btn-sm btn-danger'>Eliminar</button></div></td></tr>`;
         }
-        html += '</tbody></table>';
+        html += '</tbody></table></div>';
         document.getElementById('users-table').innerHTML = html;
     }
     async function assignRole(id, role) {
