@@ -61,6 +61,22 @@ CREATE TABLE IF NOT EXISTS reporte_ventas (
   created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
+-- Compatibility patch for legacy databases.
+-- If tables existed with old columns (e.g. usuario_ref), add missing fields
+-- so index creation and runtime queries do not fail on first deploy.
+ALTER TABLE ventas
+  ADD COLUMN IF NOT EXISTS usuario_id INTEGER;
+
+ALTER TABLE detalle_ventas
+  ADD COLUMN IF NOT EXISTS producto_id VARCHAR(64);
+
+ALTER TABLE reporte_ventas
+  ADD COLUMN IF NOT EXISTS usuario_id INTEGER,
+  ADD COLUMN IF NOT EXISTS usuario_nombre VARCHAR(120),
+  ADD COLUMN IF NOT EXISTS usuario_email VARCHAR(160),
+  ADD COLUMN IF NOT EXISTS usuario_rol VARCHAR(50),
+  ADD COLUMN IF NOT EXISTS producto_id VARCHAR(64);
+
 CREATE INDEX IF NOT EXISTS idx_roles_nombre ON roles(nombre);
 CREATE INDEX IF NOT EXISTS idx_users_role_id ON users(role_id);
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);

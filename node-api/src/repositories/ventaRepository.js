@@ -39,9 +39,9 @@ class VentaRepository {
     const { rows } = await db.query(
       `SELECT v.id, v.fecha, v.usuario_id, v.total, v.created_at, v.updated_at
        FROM ventas v
-       WHERE v.usuario_id = $1
+       WHERE v.usuario_id::text = $1::text
        ORDER BY v.id DESC`,
-      [Number(userId)]
+      [String(userId)]
     );
     return rows;
   }
@@ -113,7 +113,7 @@ class VentaRepository {
         `INSERT INTO ventas (fecha, usuario_id, total)
          VALUES ($1, $2, $3)
          RETURNING id, fecha, usuario_id, total, created_at, updated_at`,
-        [fecha || new Date(), Number(usuario_id), Number(total.toFixed(2))]
+        [fecha || new Date(), String(usuario_id), Number(total.toFixed(2))]
       );
 
       const venta = ventaRes.rows[0];
