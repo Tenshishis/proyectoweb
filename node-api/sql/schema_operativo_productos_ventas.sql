@@ -93,6 +93,21 @@ ALTER TABLE reporte_ventas
   ALTER COLUMN producto_id TYPE VARCHAR(64)
   USING producto_id::VARCHAR(64);
 
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'reporte_ventas'
+      AND column_name = 'usuario_ref'
+  ) THEN
+    -- Legacy column from previous schema versions; keep it optional.
+    EXECUTE 'ALTER TABLE reporte_ventas ALTER COLUMN usuario_ref DROP NOT NULL';
+    EXECUTE 'UPDATE reporte_ventas SET usuario_ref = usuario_id::text WHERE usuario_ref IS NULL';
+  END IF;
+END $$;
+
 CREATE INDEX IF NOT EXISTS idx_roles_nombre ON roles(nombre);
 CREATE INDEX IF NOT EXISTS idx_users_role_id ON users(role_id);
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
