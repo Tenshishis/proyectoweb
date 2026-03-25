@@ -170,8 +170,8 @@
                         </td>
                         <td>
                             <div class="d-flex flex-column flex-md-row gap-2 action-buttons">
-                                <button class="btn btn-sm btn-primary" onclick="agregarStock(${producto.id})">Agregar</button>
-                                <button class="btn btn-sm btn-outline-danger" onclick="desactivarProducto(${producto.id})">Desactivar</button>
+                                <button class="btn btn-sm btn-primary" onclick='agregarStock("${producto.id}")'>Agregar</button>
+                                <button class="btn btn-sm btn-outline-danger" onclick='desactivarProducto("${producto.id}")'>Desactivar</button>
                             </div>
                         </td>
                     </tr>
@@ -189,7 +189,7 @@
                         <td>$${formatCurrency(producto.precio)}</td>
                         <td><strong>${producto.stock}</strong></td>
                         <td>
-                            <button class="btn btn-sm btn-success" onclick="reactivarProducto(${producto.id})">Reactivar</button>
+                            <button class="btn btn-sm btn-success" onclick='reactivarProducto("${producto.id}")'>Reactivar</button>
                         </td>
                     </tr>
                 `).join('');

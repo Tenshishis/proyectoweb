@@ -1,5 +1,6 @@
 const { Pool } = require('pg');
 const mongoose = require('mongoose');
+const { bootstrapDatastores } = require('./bootstrap');
 
 const shouldUseSSL =
   process.env.PGSSLMODE === 'require' ||
@@ -26,6 +27,11 @@ const connect = async () => {
   if (process.env.MONGO_URI && mongoose.connection.readyState === 0) {
     await mongoose.connect(process.env.MONGO_URI);
   }
+
+  await bootstrapDatastores({
+    query,
+    mongoReady: mongoose.connection.readyState === 1
+  });
 };
 
 const query = (text, params = []) => pool.query(text, params);

@@ -5,24 +5,27 @@ Este proyecto está configurado para desplegar en **Render**, una plataforma clo
 ## Arquitectura
 
 El proyecto es un **monorepo** con dos servicios independientes:
-- **Backend (node-api)**: Express.js + Node.js (Usuarios/Auth en MongoDB + Productos/Ventas/Reportes en PostgreSQL)
+- **Backend (node-api)**: Express.js + Node.js (Productos en MongoDB + Usuarios/Roles/Ventas/Reportes en PostgreSQL)
 - **Frontend (frontend)**: Flask + Python
 
 Ambos se despliegan como servicios separados en Render.
+
+Para el despliegue más simple y estable, se recomienda usar solo el backend `node-api`, porque ya sirve sus propias vistas HTML y evita mantener dos servicios free activos.
 
 ## Prerequisitos
 
 1. Cuenta en [Render.com](https://render.com)
 2. Repositorio en GitHub (este proyecto ya está configurado)
-3. MongoDB Atlas para usuarios/auth
-4. PostgreSQL en Render para productos/ventas/reportes
+3. MongoDB Atlas para productos
+4. PostgreSQL en Render para usuarios/roles/ventas/reportes
 
 ## Paso 1: Preparar PostgreSQL en Render
 
 1. En Render crea una base de datos PostgreSQL.
 2. Espera estado **Available**.
 3. Copia `Internal Database URL` y credenciales `PGHOST/PGPORT/PGDATABASE/PGUSER/PGPASSWORD`.
-4. Ejecuta el esquema SQL en la base (`node-api/sql/schema_postgres.sql`) para crear `reporte_ventas`.
+4. Configura `DEFAULT_ADMIN_PASSWORD` en Render antes del primer deploy.
+5. Despliega: el backend crea automáticamente tablas, admin inicial y catálogo base si la base está vacía.
 
 ## Paso 2: Desplegar Backend en Render
 
@@ -45,10 +48,11 @@ Ambos se despliegan como servicios separados en Render.
    - **Start Command**: `npm start`
 4. En **Environment** añade:
    - `PORT`: `4000`
-   - `MONGO_URI`: Tu conexión de MongoDB Atlas
+   - `MONGO_URI`: Tu conexión de MongoDB Atlas para productos
    - `DATABASE_URL`: Tu Internal Database URL de Render PostgreSQL
    - `PGHOST`, `PGPORT`, `PGDATABASE`, `PGUSER`, `PGPASSWORD`
    - `PGSSLMODE`: `require`
+   - `DEFAULT_ADMIN_PASSWORD`: Contraseña del admin inicial
    - `JWT_SECRET`: Una contraseña segura (genera una aleatoria)
 5. Haz clic en **Create Web Service**
 
@@ -85,7 +89,7 @@ Ambos se despliegan como servicios separados en Render.
 | Variable | Ejemplo | Descripción |
 |----------|---------|-------------|
 | `PORT` | `4000` | Puerto del servidor Node |
-| `MONGO_URI` | `mongodb+srv://...` | Connection string de MongoDB (usuarios/auth) |
+| `MONGO_URI` | `mongodb+srv://...` | Connection string de MongoDB (productos) |
 | `DATABASE_URL` | `postgresql://...` | Connection string interna PostgreSQL |
 | `PGHOST` | `dpg-xxxxx` | Host de PostgreSQL |
 | `PGPORT` | `5432` | Puerto PostgreSQL |
@@ -111,7 +115,7 @@ Ambos se despliegan como servicios separados en Render.
 
 ### PostgreSQL connection error
 - Verifica que `DATABASE_URL` y `PG*` están correctas
-- Confirma que la tabla `reporte_ventas` ya fue creada
+- Revisa logs del arranque para confirmar que el bootstrap SQL se ejecutó
 - En Render, mira los logs: Dashboard → tu servicio → Logs
 
 ### Servicio tarda mucho en iniciar

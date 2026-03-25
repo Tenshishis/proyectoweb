@@ -5,7 +5,7 @@ const createVentaSchema = Joi.object({
   productos: Joi.array()
     .items(
       Joi.object({
-        id_producto: Joi.number().integer().greater(0).required(),
+        id_producto: Joi.string().trim().required(),
         cantidad: Joi.number().integer().greater(0).required()
       })
     )

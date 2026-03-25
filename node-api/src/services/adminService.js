@@ -31,7 +31,7 @@ class AdminService {
     return {
       message: "Rol actualizado correctamente",
       user: {
-        id: user._id,
+        id: user.id,
         nombre: user.nombre,
         rol: user.rol
       }
@@ -58,7 +58,7 @@ class AdminService {
       // Allow deleting/changing admins (including self)
 
       const deleted = await userRepo.deleteById(userId);
-      return { message: 'Usuario eliminado', user: { id: deleted._id, username: deleted.username, email: deleted.email } };
+      return { message: 'Usuario eliminado', user: { id: deleted.id, username: deleted.username, email: deleted.email } };
     }
 }
 

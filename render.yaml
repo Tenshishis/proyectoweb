@@ -26,5 +26,13 @@ services:
         sync: false
       - key: PGSSLMODE
         value: require
+      - key: DEFAULT_ADMIN_NAME
+        value: Administrador
+      - key: DEFAULT_ADMIN_USERNAME
+        value: admin
+      - key: DEFAULT_ADMIN_EMAIL
+        value: admin@local
+      - key: DEFAULT_ADMIN_PASSWORD
+        sync: false
       - key: JWT_SECRET
         sync: false

@@ -12,11 +12,9 @@ function getUserFromCookie(req) {
 const cookieParser = require('cookie-parser');
 const { verifyToken } = require('./src/middleware/authMiddleware');
 const { authorize } = require('./src/middleware/roleMiddleware');
-const fetch = require('node-fetch');
 
 require('dotenv').config();
 const express = require('express');
-const bodyParser = require('body-parser');
 const db = require('./src/config/db');
 const routes = require('./src/routes');
 const cors = require('cors');
@@ -82,8 +80,8 @@ app.get('/espera-rol', (req, res) => {
 });
 
 // Parse request bodies before routes
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // Handle register POST (proxy to API)
 // Directly call controller logic for register
@@ -143,10 +141,6 @@ app.post('/login', async (req, res) => {
     res.status(500).send('<h3>Error de servidor</h3>');
   }
 });
-
-// middlewares
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
 
 // enable CORS for frontend (Flask default: http://127.0.0.1:5000)
 app.use(cors({ origin: ['http://127.0.0.1:5000','http://localhost:5000'], credentials: true }));

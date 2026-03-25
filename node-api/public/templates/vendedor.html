@@ -152,7 +152,7 @@
                         <input type="number" min="1" max="${producto.stock}" class="form-control form-control-sm" id="qty-${producto.id}" value="1" ${producto.stock < 1 ? 'disabled' : ''}>
                     </td>
                     <td>
-                        <button class="btn btn-sm btn-outline-primary" onclick="agregarAlCarrito(${producto.id})" ${producto.stock < 1 ? 'disabled' : ''}>Agregar</button>
+                        <button class="btn btn-sm btn-outline-primary" onclick='agregarAlCarrito("${producto.id}")' ${producto.stock < 1 ? 'disabled' : ''}>Agregar</button>
                     </td>
                 </tr>
             `).join('');
@@ -160,7 +160,7 @@
 
         function agregarAlCarrito(productoId) {
             clearStatus();
-            const producto = productosDisponibles.find((item) => Number(item.id) === Number(productoId));
+            const producto = productosDisponibles.find((item) => String(item.id) === String(productoId));
             if (!producto) {
                 showStatus('Producto no encontrado', 'danger');
                 return;
@@ -179,7 +179,7 @@
                 return;
             }
 
-            const existente = carrito.find((item) => Number(item.id_producto) === Number(producto.id));
+            const existente = carrito.find((item) => String(item.id_producto) === String(producto.id));
             const cantidadTotal = (existente ? existente.cantidad : 0) + cantidad;
 
             if (cantidadTotal > Number(producto.stock)) {
@@ -191,7 +191,7 @@
                 existente.cantidad = cantidadTotal;
             } else {
                 carrito.push({
-                    id_producto: Number(producto.id),
+                    id_producto: String(producto.id),
                     nombre: producto.nombre,
                     precio_unitario: Number(producto.precio),
                     cantidad
@@ -202,7 +202,7 @@
         }
 
         function eliminarDelCarrito(productoId) {
-            carrito = carrito.filter((item) => Number(item.id_producto) !== Number(productoId));
+            carrito = carrito.filter((item) => String(item.id_producto) !== String(productoId));
             renderCarrito();
         }
 
@@ -224,7 +224,7 @@
                         <td>${item.cantidad}</td>
                         <td>$${formatCurrency(item.precio_unitario)}</td>
                         <td>$${formatCurrency(subtotal)}</td>
-                        <td><button class="btn btn-sm btn-outline-danger" onclick="eliminarDelCarrito(${item.id_producto})">Quitar</button></td>
+                        <td><button class="btn btn-sm btn-outline-danger" onclick='eliminarDelCarrito("${item.id_producto}")'>Quitar</button></td>
                     </tr>
                 `;
             }).join('');
@@ -241,7 +241,7 @@
 
             const payload = {
                 productos: carrito.map((item) => ({
-                    id_producto: Number(item.id_producto),
+                    id_producto: String(item.id_producto),
                     cantidad: Number(item.cantidad)
                 }))
             };

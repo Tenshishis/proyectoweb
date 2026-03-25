@@ -40,9 +40,13 @@ def login():
             session['token'] = result['token']
             session['rol'] = result['user']['rol']
             # also set a cookie so client-side JS can read it
-            resp = redirect('/admin' if session['rol'] == 'ADMIN' else
-                            '/vendedor' if session['rol'] == 'VENDEDOR' else
-                            '/consultor')
+            destino = (
+                '/admin' if session['rol'] == 'ADMIN' else
+                '/vendedor' if session['rol'] == 'VENDEDOR' else
+                '/consultor' if session['rol'] == 'CONSULTOR' else
+                '/espera-rol'
+            )
+            resp = redirect(destino)
             resp.set_cookie('token', result['token'])
             return resp
         return "Error de login", r.status_code
@@ -52,19 +56,25 @@ def login():
 def admin():
     if session.get('rol') != 'ADMIN':
         return redirect('/login')
-    return render_template('admin.html')
+    return render_template('admin.html', api_base=API_BASE)
 
 @app.route('/vendedor')
 def vendedor():
     if session.get('rol') != 'VENDEDOR':
         return redirect('/login')
-    return render_template('vendedor.html')
+    return render_template('vendedor.html', api_base=API_BASE)
 
 @app.route('/consultor')
 def consultor():
     if session.get('rol') != 'CONSULTOR':
         return redirect('/login')
-    return render_template('consultor.html')
+    return render_template('consultor.html', api_base=API_BASE)
+
+@app.route('/espera-rol')
+def espera_rol():
+    if 'token' not in session:
+        return redirect('/login')
+    return 'Tu usuario sigue pendiente de asignacion de rol por parte del administrador.'
 
 if __name__ == '__main__':
     app.run(debug=True)

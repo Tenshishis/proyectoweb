@@ -1,4 +1,5 @@
 const db = require('../config/db');
+const productoRepository = require('./productoRepository');
 
 class VentaRepository {
   async getAll() {
@@ -40,66 +41,79 @@ class VentaRepository {
        FROM ventas v
        WHERE v.usuario_id = $1
        ORDER BY v.id DESC`,
-      [String(userId)]
+      [Number(userId)]
     );
     return rows;
   }
 
   async createWithItems({ usuario_id, fecha, productos }) {
     const client = await db.getClient();
-    try {
-      await client.query('BEGIN');
+    const movimientosAplicados = [];
 
+    try {
       let total = 0;
       const detalle = [];
 
       for (const item of productos) {
         const { id_producto, cantidad } = item;
-        const productoRes = await client.query(
-          `SELECT id, nombre, precio, stock, activo
-           FROM productos
-           WHERE id = $1
-           FOR UPDATE`,
-          [id_producto]
-        );
+        const productoOriginal = await productoRepository.getById(id_producto);
 
-        const producto = productoRes.rows[0];
-        if (!producto || !producto.activo) {
+        if (!productoOriginal || !productoOriginal.activo) {
           const error = new Error(`Producto no encontrado: ${id_producto}`);
           error.status = 404;
           throw error;
         }
 
-        if (producto.stock < cantidad) {
-          const error = new Error(`Stock insuficiente para: ${producto.nombre}`);
+        if (Number(productoOriginal.stock) < Number(cantidad)) {
+          const error = new Error(`Stock insuficiente para: ${productoOriginal.nombre}`);
           error.status = 400;
           throw error;
         }
 
-        await client.query(
-          `UPDATE productos
-           SET stock = stock - $2
-           WHERE id = $1`,
-          [id_producto, cantidad]
-        );
+        const productoActualizado = await productoRepository.decrementStockIfAvailable(id_producto, cantidad);
+        if (!productoActualizado) {
+          const error = new Error(`Stock insuficiente para: ${productoOriginal.nombre}`);
+          error.status = 400;
+          throw error;
+        }
 
-        const subtotal = Number((Number(producto.precio) * Number(cantidad)).toFixed(2));
+        movimientosAplicados.push({ id_producto, cantidad: Number(cantidad) });
+
+        const subtotal = Number((Number(productoOriginal.precio) * Number(cantidad)).toFixed(2));
         total += subtotal;
 
         detalle.push({
-          id_producto: producto.id,
-          nombre_producto: producto.nombre,
+          id_producto: String(productoOriginal.id),
+          nombre_producto: productoOriginal.nombre,
           cantidad,
-          precio_unitario: Number(producto.precio),
+          precio_unitario: Number(productoOriginal.precio),
           subtotal
         });
+      }
+
+      await client.query('BEGIN');
+
+      const usuarioRes = await client.query(
+        `SELECT u.id, u.nombre, u.email, r.nombre AS rol
+         FROM users u
+         JOIN roles r ON r.id = u.role_id
+         WHERE u.id = $1
+         LIMIT 1`,
+        [usuario_id]
+      );
+
+      const usuario = usuarioRes.rows[0] || null;
+      if (!usuario) {
+        const error = new Error('Usuario no encontrado');
+        error.status = 404;
+        throw error;
       }
 
       const ventaRes = await client.query(
         `INSERT INTO ventas (fecha, usuario_id, total)
          VALUES ($1, $2, $3)
          RETURNING id, fecha, usuario_id, total, created_at, updated_at`,
-        [fecha || new Date(), String(usuario_id), Number(total.toFixed(2))]
+        [fecha || new Date(), Number(usuario_id), Number(total.toFixed(2))]
       );
 
       const venta = ventaRes.rows[0];
@@ -113,12 +127,15 @@ class VentaRepository {
 
         await client.query(
           `INSERT INTO reporte_ventas
-           (venta_id, fecha, usuario_ref, producto_id, nombre_producto, cantidad, precio_unitario, subtotal, total_venta)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+           (venta_id, fecha, usuario_id, usuario_nombre, usuario_email, usuario_rol, producto_id, nombre_producto, cantidad, precio_unitario, subtotal, total_venta)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
           [
             venta.id,
             venta.fecha,
-            String(usuario_id),
+            usuario.id,
+            usuario.nombre,
+            usuario.email,
+            usuario.rol,
             item.id_producto,
             item.nombre_producto,
             item.cantidad,
@@ -136,7 +153,16 @@ class VentaRepository {
         productos: detalle
       };
     } catch (error) {
-      await client.query('ROLLBACK');
+      try {
+        await client.query('ROLLBACK');
+      } catch (_) {
+        // no-op
+      }
+
+      for (const movimiento of movimientosAplicados.reverse()) {
+        await productoRepository.incrementStock(movimiento.id_producto, movimiento.cantidad);
+      }
+
       throw error;
     } finally {
       client.release();

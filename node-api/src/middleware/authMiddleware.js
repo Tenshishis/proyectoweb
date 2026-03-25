@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const User = require('../models/User');
+const userRepository = require('../repositories/userRepository');
 
 exports.verifyToken = async (req, res, next) => {
   let token = null;
@@ -19,11 +19,10 @@ exports.verifyToken = async (req, res, next) => {
 
   try {
     const payload = jwt.verify(token, process.env.JWT_SECRET);
-    // optionally you can reload user from database
-    const user = await User.findById(payload.id);
+    const user = await userRepository.findById(payload.id);
     if (!user) return res.status(401).json({ message: 'User not found' });
 
-    req.user = { id: user._id, rol: user.rol };
+    req.user = { id: user.id, rol: user.rol };
     next();
   } catch (err) {
     return res.status(401).json({ message: 'Token invalid or expired' });

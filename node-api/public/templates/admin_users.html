@@ -48,11 +48,12 @@
         const users = data.users || data;
         let html = `<div class='table-responsive'><table class='table align-middle'><thead><tr><th>Nombre</th><th>Usuario</th><th>Email</th><th>Rol</th><th>Acciones</th></tr></thead><tbody>`;
         for (const user of users) {
+            const userId = user.id || user._id;
             html += `<tr><td>${user.nombre || ''}</td><td>${user.username || ''}</td><td>${user.email || ''}</td><td>${user.rol || 'Sin rol'}</td>`;
-            html += `<td><div class='actions-wrap d-flex flex-wrap gap-1'><button onclick=\"assignRole('${user._id}','ADMIN')\" class='btn btn-sm btn-success'>Admin</button>`;
-            html += `<button onclick=\"assignRole('${user._id}','VENDEDOR')\" class='btn btn-sm btn-primary'>Vendedor</button>`;
-            html += `<button onclick=\"assignRole('${user._id}','CONSULTOR')\" class='btn btn-sm btn-warning'>Consultor</button>`;
-            html += `<button onclick=\"deleteUser('${user._id}')\" class='btn btn-sm btn-danger'>Eliminar</button></div></td></tr>`;
+            html += `<td><div class='actions-wrap d-flex flex-wrap gap-1'><button onclick=\"assignRole('${userId}','ADMIN')\" class='btn btn-sm btn-success'>Admin</button>`;
+            html += `<button onclick=\"assignRole('${userId}','VENDEDOR')\" class='btn btn-sm btn-primary'>Vendedor</button>`;
+            html += `<button onclick=\"assignRole('${userId}','CONSULTOR')\" class='btn btn-sm btn-warning'>Consultor</button>`;
+            html += `<button onclick=\"deleteUser('${userId}')\" class='btn btn-sm btn-danger'>Eliminar</button></div></td></tr>`;
         }
         html += '</tbody></table></div>';
         document.getElementById('users-table').innerHTML = html;

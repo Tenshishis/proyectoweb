@@ -20,28 +20,30 @@
     <script>
     async function fetchUsers() {
         const res = await fetch('/api/admin/users');
-        const users = await res.json();
+        const data = await res.json();
+        const users = data.users || data;
         let html = `<table class='table'><thead><tr><th>Nombre</th><th>Usuario</th><th>Email</th><th>Rol</th><th>Acciones</th></tr></thead><tbody>`;
         for (const user of users) {
+            const userId = user.id || user._id;
             html += `<tr><td>${user.nombre}</td><td>${user.username}</td><td>${user.email}</td><td>${user.rol || 'Sin rol'}</td>`;
-            html += `<td><button onclick="assignRole('${user._id}','admin')" class='btn btn-sm btn-success me-1'>Admin</button>`;
-            html += `<button onclick="assignRole('${user._id}','vendedor')" class='btn btn-sm btn-primary me-1'>Vendedor</button>`;
-            html += `<button onclick="assignRole('${user._id}','consultor')" class='btn btn-sm btn-warning me-1'>Consultor</button>`;
-            html += `<button onclick="deleteUser('${user._id}')" class='btn btn-sm btn-danger'>Eliminar</button></td></tr>`;
+            html += `<td><button onclick="assignRole('${userId}','ADMIN')" class='btn btn-sm btn-success me-1'>Admin</button>`;
+            html += `<button onclick="assignRole('${userId}','VENDEDOR')" class='btn btn-sm btn-primary me-1'>Vendedor</button>`;
+            html += `<button onclick="assignRole('${userId}','CONSULTOR')" class='btn btn-sm btn-warning me-1'>Consultor</button>`;
+            html += `<button onclick="deleteUser('${userId}')" class='btn btn-sm btn-danger'>Eliminar</button></td></tr>`;
         }
         html += '</tbody></table>';
         document.getElementById('users-table').innerHTML = html;
     }
     async function assignRole(id, role) {
-        await fetch(`/api/admin/assign-role/${id}`, {
-            method: 'POST',
+        await fetch(`/api/admin/asignar-rol`, {
+            method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ rol: role })
+            body: JSON.stringify({ userId: id, nuevoRol: role })
         });
         fetchUsers();
     }
     async function deleteUser(id) {
-        await fetch(`/api/admin/delete-user/${id}`, { method: 'DELETE' });
+        await fetch(`/api/admin/users/${id}`, { method: 'DELETE' });
         fetchUsers();
     }
     fetchUsers();
