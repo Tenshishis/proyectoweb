@@ -51,6 +51,9 @@ ALTER TABLE reporte_ventas
   ADD COLUMN IF NOT EXISTS producto_id VARCHAR(64);
 
 ALTER TABLE reporte_ventas
+  DROP CONSTRAINT IF EXISTS reporte_ventas_producto_id_fkey;
+
+ALTER TABLE reporte_ventas
   ALTER COLUMN producto_id TYPE VARCHAR(64)
   USING producto_id::VARCHAR(64);
 

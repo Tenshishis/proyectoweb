@@ -70,6 +70,11 @@ ALTER TABLE ventas
 ALTER TABLE detalle_ventas
   ADD COLUMN IF NOT EXISTS producto_id VARCHAR(64);
 
+-- Legacy setups linked producto_id against a SQL productos table.
+-- Drop that FK so producto_id can store Mongo ObjectId values.
+ALTER TABLE detalle_ventas
+  DROP CONSTRAINT IF EXISTS detalle_ventas_producto_id_fkey;
+
 ALTER TABLE detalle_ventas
   ALTER COLUMN producto_id TYPE VARCHAR(64)
   USING producto_id::VARCHAR(64);
@@ -80,6 +85,9 @@ ALTER TABLE reporte_ventas
   ADD COLUMN IF NOT EXISTS usuario_email VARCHAR(160),
   ADD COLUMN IF NOT EXISTS usuario_rol VARCHAR(50),
   ADD COLUMN IF NOT EXISTS producto_id VARCHAR(64);
+
+ALTER TABLE reporte_ventas
+  DROP CONSTRAINT IF EXISTS reporte_ventas_producto_id_fkey;
 
 ALTER TABLE reporte_ventas
   ALTER COLUMN producto_id TYPE VARCHAR(64)
