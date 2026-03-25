@@ -70,12 +70,20 @@ ALTER TABLE ventas
 ALTER TABLE detalle_ventas
   ADD COLUMN IF NOT EXISTS producto_id VARCHAR(64);
 
+ALTER TABLE detalle_ventas
+  ALTER COLUMN producto_id TYPE VARCHAR(64)
+  USING producto_id::VARCHAR(64);
+
 ALTER TABLE reporte_ventas
   ADD COLUMN IF NOT EXISTS usuario_id INTEGER,
   ADD COLUMN IF NOT EXISTS usuario_nombre VARCHAR(120),
   ADD COLUMN IF NOT EXISTS usuario_email VARCHAR(160),
   ADD COLUMN IF NOT EXISTS usuario_rol VARCHAR(50),
   ADD COLUMN IF NOT EXISTS producto_id VARCHAR(64);
+
+ALTER TABLE reporte_ventas
+  ALTER COLUMN producto_id TYPE VARCHAR(64)
+  USING producto_id::VARCHAR(64);
 
 CREATE INDEX IF NOT EXISTS idx_roles_nombre ON roles(nombre);
 CREATE INDEX IF NOT EXISTS idx_users_role_id ON users(role_id);

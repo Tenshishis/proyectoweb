@@ -51,6 +51,13 @@ class VentaRepository {
     const movimientosAplicados = [];
 
     try {
+      const usuarioIdNumerico = Number.parseInt(usuario_id, 10);
+      if (!Number.isInteger(usuarioIdNumerico) || usuarioIdNumerico <= 0) {
+        const error = new Error('Usuario invalido para registrar la venta');
+        error.status = 400;
+        throw error;
+      }
+
       let total = 0;
       const detalle = [];
 
@@ -99,7 +106,7 @@ class VentaRepository {
          JOIN roles r ON r.id = u.role_id
          WHERE u.id = $1
          LIMIT 1`,
-        [usuario_id]
+        [usuarioIdNumerico]
       );
 
       const usuario = usuarioRes.rows[0] || null;
@@ -113,7 +120,7 @@ class VentaRepository {
         `INSERT INTO ventas (fecha, usuario_id, total)
          VALUES ($1, $2, $3)
          RETURNING id, fecha, usuario_id, total, created_at, updated_at`,
-        [fecha || new Date(), String(usuario_id), Number(total.toFixed(2))]
+        [fecha || new Date(), usuarioIdNumerico, Number(total.toFixed(2))]
       );
 
       const venta = ventaRes.rows[0];

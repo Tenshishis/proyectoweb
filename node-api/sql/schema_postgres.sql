@@ -50,6 +50,10 @@ ALTER TABLE reporte_ventas
   ADD COLUMN IF NOT EXISTS usuario_rol VARCHAR(50),
   ADD COLUMN IF NOT EXISTS producto_id VARCHAR(64);
 
+ALTER TABLE reporte_ventas
+  ALTER COLUMN producto_id TYPE VARCHAR(64)
+  USING producto_id::VARCHAR(64);
+
 CREATE INDEX IF NOT EXISTS idx_roles_nombre ON roles(nombre);
 CREATE INDEX IF NOT EXISTS idx_users_role_id ON users(role_id);
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
