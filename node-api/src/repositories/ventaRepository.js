@@ -4,8 +4,10 @@ const productoRepository = require('./productoRepository');
 class VentaRepository {
   async getAll() {
     const { rows } = await db.query(
-      `SELECT v.id, v.fecha, v.usuario_id, v.total, v.created_at, v.updated_at
+      `SELECT v.id, v.fecha, v.usuario_id, COALESCE(u.nombre, 'Usuario no disponible') AS usuario_nombre,
+              v.total, v.created_at, v.updated_at
        FROM ventas v
+       LEFT JOIN users u ON v.usuario_id::text = u.id::text
        ORDER BY v.id DESC`
     );
     return rows;
@@ -13,8 +15,10 @@ class VentaRepository {
 
   async getById(id) {
     const ventaResult = await db.query(
-      `SELECT v.id, v.fecha, v.usuario_id, v.total, v.created_at, v.updated_at
+      `SELECT v.id, v.fecha, v.usuario_id, COALESCE(u.nombre, 'Usuario no disponible') AS usuario_nombre,
+              v.total, v.created_at, v.updated_at
        FROM ventas v
+       LEFT JOIN users u ON v.usuario_id::text = u.id::text
        WHERE v.id = $1
        LIMIT 1`,
       [id]
@@ -37,8 +41,10 @@ class VentaRepository {
 
   async getByUser(userId) {
     const { rows } = await db.query(
-      `SELECT v.id, v.fecha, v.usuario_id, v.total, v.created_at, v.updated_at
+      `SELECT v.id, v.fecha, v.usuario_id, COALESCE(u.nombre, 'Usuario no disponible') AS usuario_nombre,
+              v.total, v.created_at, v.updated_at
        FROM ventas v
+       LEFT JOIN users u ON v.usuario_id::text = u.id::text
        WHERE v.usuario_id::text = $1::text
        ORDER BY v.id DESC`,
       [String(userId)]

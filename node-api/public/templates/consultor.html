@@ -56,14 +56,14 @@
                             <input type="date" id="filtro-hasta" class="form-control">
                         </div>
                         <div class="col-md-4">
-                            <label for="filtro-texto" class="form-label">Buscar por ID usuario</label>
-                            <input type="text" id="filtro-texto" class="form-control" placeholder="Ej: 67f...">
+                            <label for="filtro-texto" class="form-label">Buscar por ID o nombre</label>
+                            <input type="text" id="filtro-texto" class="form-control" placeholder="Ej: 2 o Juan Perez">
                         </div>
                     </div>
                     <div class="mt-3 d-flex flex-column flex-md-row gap-2 filter-actions">
                         <button id="aplicar-filtros" class="btn btn-primary btn-sm">Aplicar filtros</button>
                         <button id="limpiar-filtros" class="btn btn-outline-secondary btn-sm">Limpiar</button>
-                        <button id="exportar-csv-usuario" class="btn btn-success btn-sm">Exportar CSV por usuario</button>
+                        <button id="exportar-csv-usuario" class="btn btn-success btn-sm">Exportar CSV filtrado</button>
                     </div>
                 </div>
 
@@ -75,12 +75,13 @@
                                 <tr>
                                     <th>ID Venta</th>
                                     <th>Fecha</th>
-                                    <th>Usuario</th>
+                                    <th>Usuario ID</th>
+                                    <th>Nombre vendedor</th>
                                     <th>Total</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr><td colspan="4" class="text-center text-muted">Cargando...</td></tr>
+                                <tr><td colspan="5" class="text-center text-muted">Cargando...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -143,7 +144,7 @@
 
         function renderVentas(ventas) {
             if (!ventas.length) {
-                ventasTableBody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No hay ventas para mostrar</td></tr>';
+                ventasTableBody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No hay ventas para mostrar</td></tr>';
                 return;
             }
 
@@ -152,9 +153,18 @@
                     <td>${venta.id}</td>
                     <td>${new Date(venta.fecha).toLocaleString()}</td>
                     <td>${venta.usuario_id || '-'}</td>
+                    <td>${venta.usuario_nombre || 'Usuario no disponible'}</td>
                     <td>$${formatCurrency(venta.total)}</td>
                 </tr>
             `).join('');
+        }
+
+        function matchesTextoFiltro(venta, texto) {
+            if (!texto) return true;
+
+            const usuarioId = String(venta.usuario_id || '').toLowerCase();
+            const usuarioNombre = String(venta.usuario_nombre || '').toLowerCase();
+            return usuarioId.includes(texto) || usuarioNombre.includes(texto);
         }
 
         function applyFilters() {
@@ -166,7 +176,7 @@
                 const fechaVenta = new Date(venta.fecha);
                 if (desde && fechaVenta < desde) return false;
                 if (hasta && fechaVenta > hasta) return false;
-                if (texto && !String(venta.usuario_id || '').toLowerCase().includes(texto)) return false;
+                if (!matchesTextoFiltro(venta, texto)) return false;
                 return true;
             });
 
@@ -195,31 +205,35 @@
                 const fechaVenta = new Date(venta.fecha);
                 if (desde && fechaVenta < desde) return false;
                 if (hasta && fechaVenta > hasta) return false;
-                if (texto && !String(venta.usuario_id || '').toLowerCase().includes(texto)) return false;
+                if (!matchesTextoFiltro(venta, texto)) return false;
                 return true;
             });
+        }
+
+        function buildCsvSafeFragment(value) {
+            return String(value || 'todos')
+                .trim()
+                .replace(/\s+/g, '_')
+                .replace(/[^a-zA-Z0-9_-]/g, '')
+                .slice(0, 40) || 'todos';
         }
 
         function exportarCsvPorUsuario() {
             clearStatus();
             const usuarioFiltro = filtroTexto.value.trim();
 
-            if (!usuarioFiltro) {
-                showStatus('Para exportar por usuario, primero escribe un ID de usuario en el filtro.', 'warning');
-                return;
-            }
-
             const ventasFiltradas = getFilteredVentas();
             if (!ventasFiltradas.length) {
-                showStatus('No hay ventas para exportar con ese usuario/filtros.', 'warning');
+                showStatus('No hay ventas para exportar con los filtros actuales.', 'warning');
                 return;
             }
 
-            const headers = ['venta_id', 'fecha', 'usuario_id', 'total'];
+            const headers = ['venta_id', 'fecha', 'usuario_id', 'usuario_nombre', 'total'];
             const rows = ventasFiltradas.map((venta) => [
                 venta.id,
                 new Date(venta.fecha).toISOString(),
                 venta.usuario_id || '',
+                venta.usuario_nombre || '',
                 Number(venta.total || 0).toFixed(2)
             ]);
 
@@ -231,7 +245,7 @@
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;
-            link.download = `reporte_ventas_usuario_${usuarioFiltro}_${new Date().toISOString().slice(0, 10)}.csv`;
+            link.download = `reporte_ventas_${buildCsvSafeFragment(usuarioFiltro)}_${new Date().toISOString().slice(0, 10)}.csv`;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
@@ -255,7 +269,7 @@
                 renderVentas(ventasCache);
             } catch (error) {
                 showStatus(error.message, 'danger');
-                ventasTableBody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No se pudo cargar la información</td></tr>';
+                ventasTableBody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No se pudo cargar la información</td></tr>';
             }
         }
 
