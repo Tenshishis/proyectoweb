@@ -1,15 +1,18 @@
 services:
   - type: web
-    name: proyectoweb
+    name: proyectoweb-backend
     env: node
+    rootDir: node-api
     plan: free
-    buildCommand: npm install --prefix node-api
-    startCommand: npm start --prefix node-api
+    buildCommand: npm install
+    startCommand: npm start
     envVars:
       - key: NODE_ENV
         value: production
-      - key: PORT
-        value: 10000
+      - key: ENABLE_NODE_UI
+        value: "false"
+      - key: CORS_ORIGINS
+        sync: false
       - key: MONGO_URI
         sync: false
       - key: DATABASE_URL
@@ -35,4 +38,17 @@ services:
       - key: DEFAULT_ADMIN_PASSWORD
         sync: false
       - key: JWT_SECRET
+        sync: false
+
+  - type: web
+    name: proyectoweb-frontend
+    env: python
+    rootDir: frontend
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    envVars:
+      - key: API_BASE
+        sync: false
+      - key: FLASK_SECRET
         sync: false
