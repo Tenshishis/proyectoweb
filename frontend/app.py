@@ -18,7 +18,8 @@ def register():
             'nombre': request.form['nombre'],
             'username': request.form['username'],
             'email': request.form['email'],
-            'password': request.form['password']
+            'password': request.form['password'],
+            'confirmPassword': request.form['confirmPassword']
         }
         r = requests.post(f"{API_BASE}/auth/register", json=data)
         if r.status_code == 201:
@@ -75,6 +76,14 @@ def espera_rol():
     if 'token' not in session:
         return redirect('/login')
     return 'Tu usuario sigue pendiente de asignacion de rol por parte del administrador.'
+
+@app.route('/logout')
+def logout():
+    session.pop('token', None)
+    session.pop('rol', None)
+    resp = redirect('/login')
+    resp.delete_cookie('token')
+    return resp
 
 if __name__ == '__main__':
     app.run(debug=True)

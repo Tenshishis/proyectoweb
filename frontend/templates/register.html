@@ -12,18 +12,21 @@
         <div class="col-12 col-md-6 col-lg-4 mt-5">
           <div class="card p-4">
             <h3 class="card-title text-center mb-3">Registrarse</h3>
-            <form method="POST">
+            <form id="register-form" method="POST">
               <div class="mb-3">
-                <input name="nombre" placeholder="Nombre" required class="form-control">
+                <input id="nombre" name="nombre" placeholder="Nombre" required class="form-control">
               </div>
               <div class="mb-3">
-                <input name="username" placeholder="Usuario" required class="form-control">
+                <input id="username" name="username" placeholder="Usuario" required class="form-control">
               </div>
               <div class="mb-3">
-                <input name="email" type="email" placeholder="Email" required class="form-control">
+                <input id="email" name="email" type="email" placeholder="Email" required class="form-control">
               </div>
               <div class="mb-3">
-                <input name="password" type="password" placeholder="Contraseña" required class="form-control">
+                <input id="password" name="password" type="password" placeholder="Contraseña" required class="form-control">
+              </div>
+              <div class="mb-3">
+                <input id="confirmPassword" name="confirmPassword" type="password" placeholder="Confirmar contraseña" required class="form-control">
               </div>
               <button class="btn btn-primary w-100 mt-2">Registrarse</button>
             </form>
@@ -34,5 +37,55 @@
         </div>
       </div>
     </div>
+    <script>
+      const registerForm = document.getElementById('register-form');
+      const nombreInput = document.getElementById('nombre');
+      const usernameInput = document.getElementById('username');
+      const emailInput = document.getElementById('email');
+      const passwordInput = document.getElementById('password');
+      const confirmPasswordInput = document.getElementById('confirmPassword');
+
+      function setInvalid(input, isInvalid) {
+        input.classList.toggle('is-invalid', isInvalid);
+      }
+
+      [nombreInput, usernameInput, emailInput, passwordInput, confirmPasswordInput].forEach((input) => {
+        input.addEventListener('input', () => setInvalid(input, false));
+      });
+
+      registerForm.addEventListener('submit', (event) => {
+        const nombre = nombreInput.value.trim();
+        const username = usernameInput.value.trim();
+        const email = emailInput.value.trim();
+        const password = passwordInput.value;
+        const confirmPassword = confirmPasswordInput.value;
+        const missing = [];
+
+        setInvalid(nombreInput, !nombre);
+        setInvalid(usernameInput, !username);
+        setInvalid(emailInput, !email);
+        setInvalid(passwordInput, !password);
+        setInvalid(confirmPasswordInput, !confirmPassword);
+
+        if (!nombre) missing.push('nombre');
+        if (!username) missing.push('usuario');
+        if (!email) missing.push('email');
+        if (!password) missing.push('contrasena');
+        if (!confirmPassword) missing.push('confirmacion de contrasena');
+
+        if (missing.length) {
+          event.preventDefault();
+          alert(`Completa los siguientes campos: ${missing.join(', ')}`);
+          return;
+        }
+
+        if (password !== confirmPassword) {
+          event.preventDefault();
+          setInvalid(passwordInput, true);
+          setInvalid(confirmPasswordInput, true);
+          alert('La confirmacion de contrasena no coincide.');
+        }
+      });
+    </script>
   </body>
 </html>

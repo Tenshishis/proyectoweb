@@ -12,14 +12,14 @@
         <div class="col-12 col-md-6 col-lg-4 mt-5">
           <div class="card p-4">
             <h3 class="card-title text-center mb-3">Iniciar sesión</h3>
-            <form method="POST">
+            <form id="login-form" method="POST">
               <div class="mb-3">
                 <label for="identifier" class="form-label">Email o usuario</label>
-                <input type="text" name="identifier" required class="form-control">
+                <input id="identifier" type="text" name="identifier" required class="form-control">
               </div>
               <div class="mb-3">
                 <label for="password" class="form-label">Contraseña</label>
-                <input type="password" name="password" required class="form-control">
+                <input id="password" type="password" name="password" required class="form-control">
               </div>
               <button class="btn btn-primary w-100">Entrar</button>
             </form>
@@ -30,5 +30,35 @@
         </div>
       </div>
     </div>
+    <script>
+      const loginForm = document.getElementById('login-form');
+      const identifierInput = document.getElementById('identifier');
+      const passwordInput = document.getElementById('password');
+
+      function setInvalid(input, isInvalid) {
+        input.classList.toggle('is-invalid', isInvalid);
+      }
+
+      [identifierInput, passwordInput].forEach((input) => {
+        input.addEventListener('input', () => setInvalid(input, false));
+      });
+
+      loginForm.addEventListener('submit', (event) => {
+        const identifier = identifierInput.value.trim();
+        const password = passwordInput.value.trim();
+        const missing = [];
+
+        setInvalid(identifierInput, !identifier);
+        setInvalid(passwordInput, !password);
+
+        if (!identifier) missing.push('usuario o email');
+        if (!password) missing.push('contrasena');
+
+        if (missing.length) {
+          event.preventDefault();
+          alert(`Completa los siguientes campos: ${missing.join(', ')}`);
+        }
+      });
+    </script>
   </body>
 </html>

@@ -4,7 +4,10 @@ exports.registerSchema = Joi.object({
   nombre: Joi.string().min(3).required(),
   username: Joi.string().min(4).required(),
   email: Joi.string().email().required(),
-  password: Joi.string().min(6).required()
+  password: Joi.string().min(6).required(),
+  confirmPassword: Joi.string().valid(Joi.ref('password')).required().messages({
+    'any.only': 'La confirmacion de contrasena no coincide con la contrasena'
+  })
 });
 
 exports.loginSchema = Joi.object({

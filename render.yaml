@@ -1,4 +1,5 @@
 services:
+  # Backend API (Node.js - PostgreSQL + MongoDB)
   - type: web
     name: proyectoweb-backend
     env: node
@@ -9,10 +10,12 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      - key: PORT
+        value: 4000
       - key: ENABLE_NODE_UI
         value: "false"
       - key: CORS_ORIGINS
-        sync: false
+        value: https://proyectoweb-frontend.onrender.com
       - key: MONGO_URI
         sync: false
       - key: DATABASE_URL
@@ -40,6 +43,7 @@ services:
       - key: JWT_SECRET
         sync: false
 
+  # Frontend (Flask - UI)
   - type: web
     name: proyectoweb-frontend
     env: python
@@ -49,6 +53,6 @@ services:
     startCommand: gunicorn app:app
     envVars:
       - key: API_BASE
-        sync: false
+        value: https://proyectoweb-backend.onrender.com/api
       - key: FLASK_SECRET
         sync: false

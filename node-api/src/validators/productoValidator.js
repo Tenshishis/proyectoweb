@@ -5,7 +5,7 @@ const createProductoSchema = Joi.object({
   descripcion: Joi.string().allow('').optional(),
   precio: Joi.number().greater(0).required(),
   categoria: Joi.string().trim().default('General'),
-  stock: Joi.number().integer().min(0).default(0),
+  stock: Joi.number().integer().min(1).required(),
   activo: Joi.boolean().optional()
 });
 
@@ -14,7 +14,7 @@ const updateProductoSchema = Joi.object({
   descripcion: Joi.string().allow('').optional(),
   precio: Joi.number().greater(0).optional(),
   categoria: Joi.string().trim().optional(),
-  stock: Joi.number().integer().min(0).optional(),
+  stock: Joi.number().integer().min(1).optional(),
   activo: Joi.boolean().optional()
 }).min(1);
 

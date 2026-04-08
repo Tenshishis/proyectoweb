@@ -38,7 +38,7 @@
                         </div>
                         <div class="col-md-2">
                             <label for="nuevo-stock" class="form-label">Stock inicial</label>
-                            <input type="number" id="nuevo-stock" class="form-control" min="0" step="1" required>
+                            <input type="number" id="nuevo-stock" class="form-control" min="1" step="1" required>
                         </div>
                         <div class="col-md-4">
                             <label for="nuevo-descripcion" class="form-label">Descripción</label>
@@ -242,23 +242,36 @@
             event.preventDefault();
             clearStatus();
 
-            const nombre = document.getElementById('nuevo-nombre').value.trim();
-            const precio = Number(document.getElementById('nuevo-precio').value);
-            const stock = Number(document.getElementById('nuevo-stock').value);
-            const descripcion = document.getElementById('nuevo-descripcion').value.trim();
+            const nombreInput = document.getElementById('nuevo-nombre');
+            const precioInput = document.getElementById('nuevo-precio');
+            const stockInput = document.getElementById('nuevo-stock');
+            const descripcionInput = document.getElementById('nuevo-descripcion');
+
+            [nombreInput, precioInput, stockInput].forEach((input) => input.classList.remove('is-invalid'));
+
+            const nombre = nombreInput.value.trim();
+            const precio = Number(precioInput.value);
+            const stock = Number(stockInput.value);
+            const descripcion = descripcionInput.value.trim();
 
             if (!nombre) {
+                nombreInput.classList.add('is-invalid');
                 showStatus('El nombre es obligatorio', 'warning');
+                alert('Debes completar el nombre del producto.');
                 return;
             }
 
             if (!(precio > 0)) {
+                precioInput.classList.add('is-invalid');
                 showStatus('El precio debe ser mayor a 0', 'warning');
+                alert('El precio debe ser mayor a 0.');
                 return;
             }
 
-            if (!Number.isInteger(stock) || stock < 0) {
-                showStatus('El stock debe ser un entero mayor o igual a 0', 'warning');
+            if (!Number.isInteger(stock) || stock <= 0) {
+                stockInput.classList.add('is-invalid');
+                showStatus('El stock debe ser un entero mayor que 0', 'warning');
+                alert('El stock inicial debe ser mayor que 0.');
                 return;
             }
 
@@ -287,8 +300,16 @@
             const input = document.getElementById(`add-${productoId}`);
             const cantidad = Number(input ? input.value : 0);
 
+            if (input) {
+                input.classList.remove('is-invalid');
+            }
+
             if (!Number.isInteger(cantidad) || cantidad <= 0) {
+                if (input) {
+                    input.classList.add('is-invalid');
+                }
                 showStatus('La cantidad debe ser un entero mayor que 0', 'warning');
+                alert('Debes agregar una cantidad valida de stock (mayor que 0).');
                 return;
             }
 

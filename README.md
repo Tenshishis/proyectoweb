@@ -75,8 +75,12 @@ Detalles importantes del frontend Flask:
 
 ## Despliegue recomendado
 
-- Opción más simple: desplegar solo `node-api` en Render.
-- Opción alternativa: desplegar `frontend` como servicio aparte solo si realmente quieres mantener Flask como cliente separado.
+- Opción recomendada: desplegar ambos servicios en el mismo proyecto de Render usando `render.yaml`:
+	- `proyectoweb-backend` (Node API + middleware + lógica de negocio)
+	- `proyectoweb-frontend` (Flask UI)
+- Ambos quedan en el mismo repo y el blueprint ya los conecta por defecto con:
+	- `CORS_ORIGINS=https://proyectoweb-frontend.onrender.com` en backend
+	- `API_BASE=https://proyectoweb-backend.onrender.com/api` en frontend
 
 ## Flujo de funcionamiento
 

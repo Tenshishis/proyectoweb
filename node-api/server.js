@@ -93,7 +93,6 @@ if (isNodeUiEnabled) {
     res.sendFile(path.join(__dirname, 'public', 'templates', 'espera_rol.html'));
   });
 }
-
 // Parse request bodies before routes
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -102,66 +101,70 @@ if (isNodeUiEnabled) {
   // Handle register POST (proxy to API)
   // Directly call controller logic for register
   const authController = require('./src/controllers/authController');
-  app.post('/register', async (req, res) => {
-    // Use a mock response object to capture controller output
-    let statusSent = 200;
-    let jsonSent = null;
-    const mockRes = {
-      status(code) { statusSent = code; return this; },
-      json(obj) { jsonSent = obj; return this; },
-      send(obj) { jsonSent = obj; return this; }
-    };
-    try {
-      await authController.register(req, mockRes);
-      if (statusSent === 201) {
-        res.send('<h3>Registrado. Espera que un administrador te asigne un rol.</h3><a href="/login">Iniciar sesión</a>');
-      } else {
-        res.status(statusSent).send(`<h3>Error: ${(jsonSent && (jsonSent.error || jsonSent.message)) || jsonSent}</h3><a href="/register">Volver</a>`);
-      }
-    } catch (err) {
-      console.error('Register error:', err);
-      res.status(500).send('<h3>Error de servidor</h3>');
-    }
-  });
-
-  // Handle login POST (proxy to API)
-  app.post('/login', async (req, res) => {
-    let statusSent = 200;
-    let jsonSent = null;
-    const mockRes = {
-      status(code) { statusSent = code; return this; },
-      json(obj) { jsonSent = obj; return this; },
-      send(obj) { jsonSent = obj; return this; }
-    };
-    try {
-      await authController.login(req, mockRes);
-      if (statusSent === 200 && jsonSent && jsonSent.token) {
-        res.cookie('token', jsonSent.token, { httpOnly: true });
-        const jwt = require('jsonwebtoken');
-        const payload = jwt.decode(jsonSent.token);
-        if (payload && payload.rol === 'ADMIN') {
-          res.redirect('/admin-redirect');
-        } else if (payload && payload.rol === 'VENDEDOR') {
-          res.redirect('/vendedor');
-        } else if (payload && payload.rol === 'CONSULTOR') {
-          res.redirect('/consultor');
+      app.post('/register', async (req, res) => {
+      // Use a mock response object to capture controller output
+      let statusSent = 200;
+      let jsonSent = null;
+      const mockRes = {
+        status(code) { statusSent = code; return this; },
+        json(obj) { jsonSent = obj; return this; },
+        send(obj) { jsonSent = obj; return this; }
+      };
+      try {
+        await authController.register(req, mockRes);
+        if (statusSent === 201) {
+          res.send('<h3>Registrado. Espera que un administrador te asigne un rol.</h3><a href="/login">Iniciar sesión</a>');
         } else {
-          res.redirect('/espera-rol');
+          res.status(statusSent).send(`<h3>Error: ${(jsonSent && (jsonSent.error || jsonSent.message)) || jsonSent}</h3><a href="/register">Volver</a>`);
         }
-      } else {
-        res.status(statusSent).send(`<h3>Error: ${(jsonSent && (jsonSent.error || jsonSent.message)) || jsonSent}</h3><a href="/login">Volver</a>`);
+      } catch (err) {
+        console.error('Register error:', err);
+        res.status(500).send('<h3>Error de servidor</h3>');
       }
-    } catch (err) {
-      console.error('Login error:', err);
-      res.status(500).send('<h3>Error de servidor</h3>');
-    }
-  });
+    });
+
+    // Handle login POST (proxy to API)
+    app.post('/login', async (req, res) => {
+      let statusSent = 200;
+      let jsonSent = null;
+      const mockRes = {
+        status(code) { statusSent = code; return this; },
+        json(obj) { jsonSent = obj; return this; },
+        send(obj) { jsonSent = obj; return this; }
+      };
+      try {
+        await authController.login(req, mockRes);
+        if (statusSent === 200 && jsonSent && jsonSent.token) {
+          res.cookie('token', jsonSent.token, { httpOnly: true });
+          const jwt = require('jsonwebtoken');
+          const payload = jwt.decode(jsonSent.token);
+          if (payload && payload.rol === 'ADMIN') {
+            res.redirect('/admin-redirect');
+          } else if (payload && payload.rol === 'VENDEDOR') {
+            res.redirect('/vendedor');
+          } else if (payload && payload.rol === 'CONSULTOR') {
+            res.redirect('/consultor');
+          } else {
+            res.redirect('/espera-rol');
+          }
+        } else {
+          res.status(statusSent).send(`<h3>Error: ${(jsonSent && (jsonSent.error || jsonSent.message)) || jsonSent}</h3><a href="/login">Volver</a>`);
+        }
+      } catch (err) {
+        console.error('Login error:', err);
+        res.status(500).send('<h3>Error de servidor</h3>');
+      }
+    });
+
+    app.get('/logout', (req, res) => {
+      res.clearCookie('token');
+      res.redirect('/login');
+    });
 }
 
 // enable CORS for frontend domains
 const allowedOrigins = getAllowedOrigins();
 app.use(cors({ origin: allowedOrigins, credentials: true }));
-
 
 if (isNodeUiEnabled) {
   // root route placeholder
@@ -201,7 +204,6 @@ if (isNodeUiEnabled) {
     });
   });
 }
-
 // routes
 app.use('/api', routes);
 

@@ -10,7 +10,7 @@ El proyecto es un **monorepo** con dos servicios independientes:
 
 Ambos se despliegan como servicios separados en Render.
 
-Para el despliegue más simple y estable, se recomienda usar solo el backend `node-api`, porque ya sirve sus propias vistas HTML y evita mantener dos servicios free activos.
+Despliegue recomendado: mantener ambos servicios dentro del mismo proyecto de Render (mismo repo + mismo blueprint), para conservar la separación de responsabilidades sin cambiar lenguajes ni lógica.
 
 ## Prerequisitos
 

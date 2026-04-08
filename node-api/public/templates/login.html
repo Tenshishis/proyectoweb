@@ -18,9 +18,9 @@
             <div class="col-12 col-sm-10 col-md-6 col-lg-5">
                 <div class="card shadow p-4 auth-card">
                     <h2 class="mb-4 auth-title">Iniciar Sesión</h2>
-                    <form method="POST" action="/login">
-                        <input type="text" name="identifier" class="form-control mb-2" placeholder="Usuario o Email" required>
-                        <input type="password" name="password" class="form-control mb-2" placeholder="Contraseña" required>
+                    <form id="login-form" method="POST" action="/login">
+                        <input type="text" id="identifier" name="identifier" class="form-control mb-2" placeholder="Usuario o Email" required>
+                        <input type="password" id="password" name="password" class="form-control mb-2" placeholder="Contraseña" required>
                         <button type="submit" class="btn btn-primary w-100">Entrar</button>
                     </form>
                     <a href="/register" class="btn btn-link mt-3">¿No tienes cuenta? Regístrate</a>
@@ -28,5 +28,35 @@
             </div>
         </div>
     </div>
+    <script>
+        const loginForm = document.getElementById('login-form');
+        const identifierInput = document.getElementById('identifier');
+        const passwordInput = document.getElementById('password');
+
+        function setInvalid(input, isInvalid) {
+            input.classList.toggle('is-invalid', isInvalid);
+        }
+
+        [identifierInput, passwordInput].forEach((input) => {
+            input.addEventListener('input', () => setInvalid(input, false));
+        });
+
+        loginForm.addEventListener('submit', (event) => {
+            const missing = [];
+            const idValue = identifierInput.value.trim();
+            const passValue = passwordInput.value.trim();
+
+            setInvalid(identifierInput, !idValue);
+            setInvalid(passwordInput, !passValue);
+
+            if (!idValue) missing.push('usuario o email');
+            if (!passValue) missing.push('contrasena');
+
+            if (missing.length) {
+                event.preventDefault();
+                alert(`Completa los siguientes campos: ${missing.join(', ')}`);
+            }
+        });
+    </script>
 </body>
 </html>

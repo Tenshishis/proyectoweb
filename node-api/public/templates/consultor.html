@@ -16,6 +16,9 @@
 </head>
 <body class="bg-light">
     <div class="container py-3 py-md-5">
+        <div class="d-flex justify-content-end mb-3">
+            <a href="/logout" class="btn btn-outline-danger btn-sm">Cerrar sesion</a>
+        </div>
         <div class="row justify-content-center g-4">
             <div class="col-12 col-xl-10">
                 <div class="card shadow p-4 mb-4 panel-card">
@@ -171,6 +174,7 @@
             const desde = filtroDesde.value ? new Date(`${filtroDesde.value}T00:00:00`) : null;
             const hasta = filtroHasta.value ? new Date(`${filtroHasta.value}T23:59:59`) : null;
             const texto = filtroTexto.value.trim().toLowerCase();
+            filtroTexto.classList.remove('is-invalid');
 
             const filtradas = ventasCache.filter((venta) => {
                 const fechaVenta = new Date(venta.fecha);
@@ -190,6 +194,7 @@
             filtroDesde.value = '';
             filtroHasta.value = '';
             filtroTexto.value = '';
+            filtroTexto.classList.remove('is-invalid');
             renderVentas(ventasCache);
             const ingresos = ventasCache.reduce((sum, venta) => sum + Number(venta.total || 0), 0);
             document.getElementById('kpi-total-ventas').textContent = String(ventasCache.length);
@@ -221,6 +226,14 @@
         function exportarCsvPorUsuario() {
             clearStatus();
             const usuarioFiltro = filtroTexto.value.trim();
+
+            filtroTexto.classList.remove('is-invalid');
+            if (!usuarioFiltro) {
+                filtroTexto.classList.add('is-invalid');
+                showStatus('Debes seleccionar un usuario (ID o nombre) antes de exportar el reporte.', 'warning');
+                alert('Para crear el reporte debes indicar un usuario en el filtro.');
+                return;
+            }
 
             const ventasFiltradas = getFilteredVentas();
             if (!ventasFiltradas.length) {

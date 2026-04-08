@@ -18,11 +18,12 @@
             <div class="col-12 col-sm-10 col-md-6 col-lg-5">
                 <div class="card shadow p-4 auth-card">
                     <h2 class="mb-4 auth-title">Registro</h2>
-                    <form method="POST" action="/register">
-                        <input type="text" name="nombre" class="form-control mb-2" placeholder="Nombre" required>
-                        <input type="text" name="username" class="form-control mb-2" placeholder="Usuario" required>
-                        <input type="email" name="email" class="form-control mb-2" placeholder="Email" required>
-                        <input type="password" name="password" class="form-control mb-2" placeholder="Contraseña" required>
+                    <form id="register-form" method="POST" action="/register">
+                        <input type="text" id="nombre" name="nombre" class="form-control mb-2" placeholder="Nombre" required>
+                        <input type="text" id="username" name="username" class="form-control mb-2" placeholder="Usuario" required>
+                        <input type="email" id="email" name="email" class="form-control mb-2" placeholder="Email" required>
+                        <input type="password" id="password" name="password" class="form-control mb-2" placeholder="Contraseña" required>
+                        <input type="password" id="confirmPassword" name="confirmPassword" class="form-control mb-3" placeholder="Confirmar contraseña" required>
                         <button type="submit" class="btn btn-primary w-100">Registrarse</button>
                     </form>
                     <a href="/login" class="btn btn-link mt-3">¿Ya tienes cuenta? Inicia sesión</a>
@@ -30,5 +31,57 @@
             </div>
         </div>
     </div>
+    <script>
+        const registerForm = document.getElementById('register-form');
+        const registerInputs = {
+            nombre: document.getElementById('nombre'),
+            username: document.getElementById('username'),
+            email: document.getElementById('email'),
+            password: document.getElementById('password'),
+            confirmPassword: document.getElementById('confirmPassword')
+        };
+
+        function setInvalid(input, isInvalid) {
+            input.classList.toggle('is-invalid', isInvalid);
+        }
+
+        Object.values(registerInputs).forEach((input) => {
+            input.addEventListener('input', () => setInvalid(input, false));
+        });
+
+        registerForm.addEventListener('submit', (event) => {
+            const missing = [];
+            const nombre = registerInputs.nombre.value.trim();
+            const username = registerInputs.username.value.trim();
+            const email = registerInputs.email.value.trim();
+            const password = registerInputs.password.value;
+            const confirmPassword = registerInputs.confirmPassword.value;
+
+            setInvalid(registerInputs.nombre, !nombre);
+            setInvalid(registerInputs.username, !username);
+            setInvalid(registerInputs.email, !email);
+            setInvalid(registerInputs.password, !password);
+            setInvalid(registerInputs.confirmPassword, !confirmPassword);
+
+            if (!nombre) missing.push('nombre');
+            if (!username) missing.push('usuario');
+            if (!email) missing.push('email');
+            if (!password) missing.push('contrasena');
+            if (!confirmPassword) missing.push('confirmacion de contrasena');
+
+            if (missing.length) {
+                event.preventDefault();
+                alert(`Completa los siguientes campos: ${missing.join(', ')}`);
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                event.preventDefault();
+                setInvalid(registerInputs.password, true);
+                setInvalid(registerInputs.confirmPassword, true);
+                alert('La confirmacion de contrasena no coincide.');
+            }
+        });
+    </script>
 </body>
 </html>
