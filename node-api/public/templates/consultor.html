@@ -223,6 +223,22 @@
                 .slice(0, 40) || 'todos';
         }
 
+        function formatCsvDate(value) {
+            const date = new Date(value);
+            if (Number.isNaN(date.getTime())) {
+                return '';
+            }
+
+            return new Intl.DateTimeFormat('es-ES', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+            }).format(date);
+        }
+
         function exportarCsvPorUsuario() {
             clearStatus();
             const usuarioFiltro = filtroTexto.value.trim();
@@ -241,12 +257,11 @@
                 return;
             }
 
-            const headers = ['venta_id', 'fecha', 'usuario_id', 'usuario_nombre', 'total'];
+            const headers = ['venta_id', 'fecha', 'vendedor', 'total'];
             const rows = ventasFiltradas.map((venta) => [
                 venta.id,
-                new Date(venta.fecha).toISOString(),
-                venta.usuario_id || '',
-                venta.usuario_nombre || '',
+                formatCsvDate(venta.fecha),
+                venta.usuario_nombre || 'Sin nombre',
                 Number(venta.total || 0).toFixed(2)
             ]);
 
