@@ -10,6 +10,10 @@ async function run() {
 
   await mongoose.connect(process.env.MONGO_URI);
 
+  const seedNames = defaultProducts.map((producto) => producto.nombre);
+
+  await Producto.deleteMany({ nombre: { $nin: seedNames } });
+
   for (const producto of defaultProducts) {
     await Producto.updateOne(
       { nombre: producto.nombre },

@@ -1,34 +1,48 @@
-const defaultProducts = [
-  { nombre: 'Audifonos Bluetooth', precio: 399, descripcion: 'Audifonos inalambricos con conexion Bluetooth', categoria: 'Electronica', stock: 25, activo: true },
-  { nombre: 'Mouse inalambrico', precio: 249, descripcion: 'Mouse optico inalambrico para computadora', categoria: 'Electronica', stock: 40, activo: true },
-  { nombre: 'Teclado mecanico', precio: 899, descripcion: 'Teclado mecanico con iluminacion RGB', categoria: 'Electronica', stock: 15, activo: true },
-  { nombre: 'Memoria USB 64GB', precio: 199, descripcion: 'Memoria USB de alta velocidad 64GB', categoria: 'Electronica', stock: 50, activo: true },
-  { nombre: 'Bocina Bluetooth', precio: 499, descripcion: 'Bocina portatil con conexion Bluetooth', categoria: 'Electronica', stock: 30, activo: true },
-  { nombre: 'Cable USB-C', precio: 120, descripcion: 'Cable de carga rapida USB tipo C', categoria: 'Electronica', stock: 60, activo: true },
-  { nombre: 'Soporte para laptop', precio: 350, descripcion: 'Soporte ergonomico para computadora portatil', categoria: 'Accesorios', stock: 20, activo: true },
-  { nombre: 'Power Bank 10000mAh', precio: 450, descripcion: 'Bateria portatil para cargar dispositivos moviles', categoria: 'Electronica', stock: 35, activo: true },
-  { nombre: 'Funda para celular', precio: 150, descripcion: 'Funda protectora para smartphone', categoria: 'Accesorios', stock: 70, activo: true },
-  { nombre: 'Protector de pantalla', precio: 100, descripcion: 'Protector de vidrio templado para celular', categoria: 'Accesorios', stock: 80, activo: true },
-  { nombre: 'Soporte para celular', precio: 180, descripcion: 'Base ajustable para sostener smartphone', categoria: 'Accesorios', stock: 45, activo: true },
-  { nombre: 'Adaptador HDMI', precio: 220, descripcion: 'Adaptador para conectar dispositivos HDMI', categoria: 'Electronica', stock: 25, activo: true },
-  { nombre: 'Hub USB 4 puertos', precio: 260, descripcion: 'Expansor USB con cuatro puertos', categoria: 'Electronica', stock: 20, activo: true },
-  { nombre: 'Lampara LED escritorio', precio: 300, descripcion: 'Lampara LED con luz ajustable para escritorio', categoria: 'Hogar', stock: 18, activo: true },
-  { nombre: 'Reloj despertador digital', precio: 280, descripcion: 'Reloj digital con alarma y luz LED', categoria: 'Hogar', stock: 22, activo: true },
-  { nombre: 'Botella termica', precio: 210, descripcion: 'Botella de acero inoxidable para bebidas', categoria: 'Hogar', stock: 30, activo: true },
-  { nombre: 'Difusor de aromas', precio: 350, descripcion: 'Difusor electrico para aceites esenciales', categoria: 'Hogar', stock: 15, activo: true },
-  { nombre: 'Juego de tazas', precio: 320, descripcion: 'Set de 4 tazas de ceramica', categoria: 'Hogar', stock: 20, activo: true },
-  { nombre: 'Almohada ergonomica', precio: 450, descripcion: 'Almohada disenada para mejorar postura al dormir', categoria: 'Hogar', stock: 12, activo: true },
-  { nombre: 'Cuaderno profesional', precio: 90, descripcion: 'Cuaderno tamano profesional 100 hojas', categoria: 'Papeleria', stock: 60, activo: true },
-  { nombre: 'Mochila escolar', precio: 550, descripcion: 'Mochila resistente con varios compartimentos', categoria: 'Papeleria', stock: 25, activo: true },
-  { nombre: 'Calculadora cientifica', precio: 420, descripcion: 'Calculadora cientifica para estudiantes', categoria: 'Papeleria', stock: 18, activo: true },
-  { nombre: 'Plumas gel paquete', precio: 80, descripcion: 'Paquete de 5 plumas de tinta gel', categoria: 'Papeleria', stock: 75, activo: true },
-  { nombre: 'Agenda 2026', precio: 160, descripcion: 'Agenda organizadora para el ano 2026', categoria: 'Papeleria', stock: 40, activo: true },
-  { nombre: 'Mouse gamer RGB', precio: 650, descripcion: 'Mouse gamer con iluminacion RGB y alta precision', categoria: 'Gaming', stock: 15, activo: true },
-  { nombre: 'Teclado gamer RGB', precio: 950, descripcion: 'Teclado gamer mecanico con iluminacion RGB', categoria: 'Gaming', stock: 10, activo: true },
-  { nombre: 'Audifonos gamer', precio: 780, descripcion: 'Audifonos con microfono para videojuegos', categoria: 'Gaming', stock: 14, activo: true },
-  { nombre: 'Control para PC', precio: 690, descripcion: 'Control compatible con computadora y juegos', categoria: 'Gaming', stock: 12, activo: true },
-  { nombre: 'Tapete gamer', precio: 300, descripcion: 'Tapete grande para mouse gamer', categoria: 'Gaming', stock: 20, activo: true },
-  { nombre: 'Soporte para control', precio: 200, descripcion: 'Base organizadora para control de videojuegos', categoria: 'Gaming', stock: 18, activo: true }
+const productBases = [
+  { nombre: 'Audifonos Bluetooth', categoria: 'Audio', descripcion: 'Audifonos inalambricos con conectividad Bluetooth y sonido claro.', precioBase: 399, stockBase: 24 },
+  { nombre: 'Bocina Portatil', categoria: 'Audio', descripcion: 'Bocina portatil para musica, reuniones y entretenimiento diario.', precioBase: 549, stockBase: 20 },
+  { nombre: 'Barra de Sonido', categoria: 'Audio', descripcion: 'Barra de sonido para mejorar el audio de pantallas y espacios pequenos.', precioBase: 1599, stockBase: 10 },
+  { nombre: 'Microfono USB', categoria: 'Audio', descripcion: 'Microfono USB para videollamadas, streaming y grabaciones caseras.', precioBase: 699, stockBase: 18 },
+  { nombre: 'Webcam Full HD', categoria: 'Computo', descripcion: 'Webcam Full HD para oficina remota, clases y creacion de contenido.', precioBase: 629, stockBase: 22 },
+  { nombre: 'Mouse Inalambrico', categoria: 'Computo', descripcion: 'Mouse inalambrico para trabajo, estudio y productividad diaria.', precioBase: 249, stockBase: 28 },
+  { nombre: 'Teclado Mecanico', categoria: 'Computo', descripcion: 'Teclado mecanico con respuesta firme para trabajo y gaming.', precioBase: 899, stockBase: 14 },
+  { nombre: 'Monitor LED 24', categoria: 'Computo', descripcion: 'Monitor LED de 24 pulgadas para escritorio y entretenimiento.', precioBase: 2899, stockBase: 8 },
+  { nombre: 'Base de Enfriamiento Laptop', categoria: 'Computo', descripcion: 'Base de enfriamiento para mejorar la temperatura en laptops.', precioBase: 459, stockBase: 18 },
+  { nombre: 'SSD Externo 500GB', categoria: 'Almacenamiento', descripcion: 'Unidad SSD externa para respaldo y transporte de archivos.', precioBase: 899, stockBase: 16 },
+  { nombre: 'Tablet 10 Pulgadas', categoria: 'Movilidad', descripcion: 'Tablet para estudio, lectura, videollamadas y entretenimiento.', precioBase: 1899, stockBase: 14 },
+  { nombre: 'Smartwatch Deportivo', categoria: 'Wearables', descripcion: 'Reloj inteligente para notificaciones, actividad y salud.', precioBase: 999, stockBase: 18 },
+  { nombre: 'Router WiFi', categoria: 'Redes', descripcion: 'Router WiFi para mejorar cobertura y estabilidad de red.', precioBase: 899, stockBase: 16 },
+  { nombre: 'Repetidor WiFi', categoria: 'Redes', descripcion: 'Repetidor de senal para ampliar cobertura inalambrica.', precioBase: 549, stockBase: 18 },
+  { nombre: 'Power Bank 10000mAh', categoria: 'Energia', descripcion: 'Bateria externa para recargar telefonos y gadgets.', precioBase: 450, stockBase: 24 },
+  { nombre: 'Cargador Inalambrico', categoria: 'Energia', descripcion: 'Base de carga inalambrica para telefonos compatibles.', precioBase: 279, stockBase: 26 },
+  { nombre: 'Regleta Inteligente', categoria: 'Energia', descripcion: 'Regleta para proteger y distribuir energia a equipos electronicos.', precioBase: 399, stockBase: 20 },
+  { nombre: 'Camara de Seguridad', categoria: 'Smart Home', descripcion: 'Camara inteligente para monitoreo remoto en interiores.', precioBase: 1099, stockBase: 14 },
+  { nombre: 'Foco Inteligente', categoria: 'Smart Home', descripcion: 'Foco inteligente con control remoto y automatizacion.', precioBase: 229, stockBase: 30 },
+  { nombre: 'Control Gamer Inalambrico', categoria: 'Gaming', descripcion: 'Control inalambrico para juegos con ergonomia y respuesta precisa.', precioBase: 699, stockBase: 16 }
 ];
+
+const productVariants = [
+  { nombre: 'Lite', detalle: 'Version de entrada para uso diario.', precioExtra: 0, stockExtra: 4 },
+  { nombre: 'Plus', detalle: 'Incluye mejor autonomia y funciones extendidas.', precioExtra: 90, stockExtra: 2 },
+  { nombre: 'Pro', detalle: 'Orientado a usuarios que buscan mayor rendimiento.', precioExtra: 180, stockExtra: 0 },
+  { nombre: 'Max', detalle: 'Configuracion reforzada para jornadas intensivas.', precioExtra: 270, stockExtra: -2 },
+  { nombre: 'X', detalle: 'Edicion con conectividad moderna y acabado premium.', precioExtra: 350, stockExtra: -4 },
+  { nombre: 'Studio', detalle: 'Pensado para creadores, oficina y trabajo hibrido.', precioExtra: 210, stockExtra: 1 },
+  { nombre: 'Office', detalle: 'Ideal para productividad continua y estaciones de trabajo.', precioExtra: 120, stockExtra: 3 },
+  { nombre: 'Home', detalle: 'Ajustado para entretenimiento y uso familiar.', precioExtra: 70, stockExtra: 5 },
+  { nombre: 'Travel', detalle: 'Diseno compacto para movilidad y espacios reducidos.', precioExtra: 110, stockExtra: 2 },
+  { nombre: 'Ultra', detalle: 'Acabado superior con mejor respuesta general.', precioExtra: 320, stockExtra: -3 }
+];
+
+const defaultProducts = productBases.flatMap((productBase, baseIndex) => (
+  productVariants.map((variant, variantIndex) => ({
+    nombre: `${productBase.nombre} ${variant.nombre}`,
+    precio: productBase.precioBase + variant.precioExtra + (baseIndex * 15) + (variantIndex % 3) * 10,
+    descripcion: `${productBase.descripcion} ${variant.detalle}`,
+    categoria: productBase.categoria,
+    stock: Math.max(6, productBase.stockBase + variant.stockExtra + (baseIndex % 4)),
+    activo: true
+  }))
+));
 
 module.exports = defaultProducts;
