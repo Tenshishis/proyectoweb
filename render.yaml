@@ -12,10 +12,10 @@ services:
         value: production
       - key: PORT
         value: 4000
-      - key: ENABLE_NODE_UI
-        value: "false"
       - key: CORS_ORIGINS
         value: https://proyectoweb-frontend.onrender.com
+      - key: FORCE_MONGO_PRODUCT_SEED
+        value: "true"
       - key: MONGO_URI
         sync: false
       - key: DATABASE_URL

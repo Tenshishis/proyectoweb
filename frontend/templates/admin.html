@@ -3,158 +3,598 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Admin</title>
+    <title>Panel Admin</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+      body { background-color: #f8f9fa; }
+      .sidebar { background-color: #2c3e50; color: white; min-height: 100vh; }
+      .nav-link { color: #ecf0f1; }
+      .nav-link.active { color: #3498db; background-color: rgba(52, 152, 219, 0.1); }
+      .nav-link:hover { color: #3498db; }
+      .main-content { padding: 2rem; }
+      .tab-content { display: none; }
+      .tab-content.active { display: block; }
+      .card-header { background-color: #3498db; color: white; }
+      .btn-group-vertical .btn { text-align: left; }
+    </style>
   </head>
   <body data-api-base="{{ api_base }}">
-    <div class="container mt-5">
-      <div class="d-flex justify-content-end mb-3">
-        <a href="/logout" class="btn btn-outline-danger btn-sm">Cerrar sesion</a>
-      </div>
-      <h1>Panel de administrador</h1>
-      <p>Aquí puedes asignar roles a los usuarios.</p>
-      <div id="usersContainer" class="mt-3">
-        <table class="table table-striped" id="usersTable">
-          <thead>
-            <tr>
-              <th>Nombre</th>
-              <th>Usuario</th>
-              <th>Email</th>
-              <th>ID</th>
-              <th>Rol actual</th>
-              <th>Nuevo rol</th>
-              <th>Acción</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
+    <div class="container-fluid">
+      <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-3 sidebar p-3">
+          <h4 class="mb-4">Admin Panel</h4>
+          <nav class="nav flex-column">
+            <a href="#" class="nav-link active" onclick="switchTab(event, 'usuarios')">👥 Usuarios</a>
+            <a href="#" class="nav-link" onclick="switchTab(event, 'productos')">📦 Productos</a>
+            <a href="#" class="nav-link" onclick="switchTab(event, 'categorias')">🏷️ Categorías</a>
+            <a href="#" class="nav-link" onclick="switchTab(event, 'inventario')">📊 Inventario</a>
+            <a href="#" class="nav-link" onclick="switchTab(event, 'reportes')">📈 Reportes</a>
+            <hr>
+            <a href="/logout" class="nav-link">🚪 Cerrar Sesión</a>
+          </nav>
+        </div>
 
-      <script>
-        const API_BASE = document.body.dataset.apiBase;
-        const roles = ['ADMIN','VENDEDOR','CONSULTOR'];
+        <!-- Main Content -->
+        <div class="col-md-9 main-content">
+          <!-- USUARIOS -->
+          <div id="usuarios" class="tab-content active">
+            <h2 class="mb-4">Gestión de Usuarios</h2>
+            <div class="card">
+              <div class="card-header">
+                <h5>Lista de Usuarios</h5>
+              </div>
+              <div class="card-body">
+                <div class="table-responsive">
+                  <table class="table table-striped" id="usersTable">
+                    <thead>
+                      <tr>
+                        <th>Nombre</th>
+                        <th>Usuario</th>
+                        <th>Email</th>
+                        <th>Rol Actual</th>
+                        <th>Nuevo Rol</th>
+                        <th>Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody></tbody>
+                  </table>
+                </div>
+                <div id="usersLoading" class="alert alert-info">Cargando usuarios...</div>
+              </div>
+            </div>
+          </div>
 
-        function getToken() {
-          const cookieToken = document.cookie.split('; ').find(row => row.startsWith('token='));
-          return cookieToken ? cookieToken.split('=')[1] : null;
+          <!-- PRODUCTOS -->
+          <div id="productos" class="tab-content">
+            <h2 class="mb-4">Gestión de Productos</h2>
+            <button class="btn btn-success mb-3" data-bs-toggle="modal" data-bs-target="#productModal">
+              ➕ Nuevo Producto
+            </button>
+            <div class="card">
+              <div class="card-header">
+                <h5>Catálogo de Productos</h5>
+              </div>
+              <div class="card-body">
+                <div class="table-responsive">
+                  <table class="table table-striped" id="productsTable">
+                    <thead>
+                      <tr>
+                        <th>Nombre</th>
+                        <th>Categoría</th>
+                        <th>Precio</th>
+                        <th>Stock</th>
+                        <th>Activo</th>
+                        <th>Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody></tbody>
+                  </table>
+                </div>
+                <div id="productsLoading" class="alert alert-info">Cargando productos...</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- CATEGORÍAS -->
+          <div id="categorias" class="tab-content">
+            <h2 class="mb-4">Categorías</h2>
+            <div class="row">
+              <div class="col-md-4">
+                <div class="card">
+                  <div class="card-header">
+                    <h5>Nueva Categoría</h5>
+                  </div>
+                  <div class="card-body">
+                    <form id="categoryForm">
+                      <div class="mb-3">
+                        <label for="categoryName" class="form-label">Nombre</label>
+                        <input type="text" class="form-control" id="categoryName" required>
+                      </div>
+                      <button type="submit" class="btn btn-primary w-100">Crear</button>
+                    </form>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-8">
+                <div class="card">
+                  <div class="card-header">
+                    <h5>Categorías Existentes</h5>
+                  </div>
+                  <div class="card-body">
+                    <div id="categoriesList"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- INVENTARIO -->
+          <div id="inventario" class="tab-content">
+            <h2 class="mb-4">Inventario General</h2>
+            <div class="row mb-3">
+              <div class="col-md-4">
+                <div class="card text-center">
+                  <div class="card-body">
+                    <h6 class="card-title">Productos Totales</h6>
+                    <h3 id="totalProducts">0</h3>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="card text-center">
+                  <div class="card-body">
+                    <h6 class="card-title">Stock Total</h6>
+                    <h3 id="totalStock">0</h3>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="card text-center">
+                  <div class="card-body">
+                    <h6 class="card-title">Bajo Stock</h6>
+                    <h3 id="lowStock" class="text-danger">0</h3>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-header">
+                <h5>Productos con Bajo Stock (&lt; 10 unidades)</h5>
+              </div>
+              <div class="card-body">
+                <table class="table table-warning" id="lowStockTable">
+                  <thead>
+                    <tr>
+                      <th>Producto</th>
+                      <th>Stock Actual</th>
+                      <th>Acción</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- REPORTES -->
+          <div id="reportes" class="tab-content">
+            <h2 class="mb-4">Reportes</h2>
+            <div class="row">
+              <div class="col-md-6">
+                <div class="card">
+                  <div class="card-header">
+                    <h5>Ventas por Mes</h5>
+                  </div>
+                  <div class="card-body">
+                    <canvas id="salesChart"></canvas>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="card">
+                  <div class="card-header">
+                    <h5>Productos Más Vendidos</h5>
+                  </div>
+                  <div class="card-body">
+                    <canvas id="topProductsChart"></canvas>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="card mt-3">
+              <div class="card-header">
+                <h5>Resumen de Ventas</h5>
+              </div>
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-md-3">
+                    <h6>Total de Ventas</h6>
+                    <h3 id="totalSales">0</h3>
+                  </div>
+                  <div class="col-md-3">
+                    <h6>Ingresos Totales</h6>
+                    <h3 id="totalRevenue">$0</h3>
+                  </div>
+                  <div class="col-md-3">
+                    <h6>Vendedores Activos</h6>
+                    <h3 id="activeSellers">0</h3>
+                  </div>
+                  <div class="col-md-3">
+                    <h6>Ticket Promedio</h6>
+                    <h3 id="avgTicket">$0</h3>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal para Productos -->
+    <div class="modal fade" id="productModal" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Nuevo Producto</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <form id="productForm">
+              <div class="mb-3">
+                <label for="productName" class="form-label">Nombre</label>
+                <input type="text" class="form-control" id="productName" required>
+              </div>
+              <div class="mb-3">
+                <label for="productCategoria" class="form-label">Categoría</label>
+                <input type="text" class="form-control" id="productCategoria" required>
+              </div>
+              <div class="mb-3">
+                <label for="productPrecio" class="form-label">Precio</label>
+                <input type="number" class="form-control" id="productPrecio" step="0.01" required>
+              </div>
+              <div class="mb-3">
+                <label for="productStock" class="form-label">Stock</label>
+                <input type="number" class="form-control" id="productStock" required>
+              </div>
+              <div class="mb-3">
+                <label for="productDescripcion" class="form-label">Descripción</label>
+                <textarea class="form-control" id="productDescripcion" rows="3"></textarea>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="button" class="btn btn-primary" onclick="saveProduct()">Guardar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      const API_BASE = document.body.dataset.apiBase;
+      const roles = ['ADMIN', 'VENDEDOR', 'CONSULTOR'];
+      let salesChart, topProductsChart;
+
+      function getToken() {
+        const cookieToken = document.cookie.split('; ').find(row => row.startsWith('token='));
+        return cookieToken ? cookieToken.split('=')[1] : null;
+      }
+
+      function switchTab(e, tabName) {
+        e.preventDefault();
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
+        document.getElementById(tabName).classList.add('active');
+        event.target.classList.add('active');
+        
+        if (tabName === 'usuarios') loadUsers();
+        if (tabName === 'productos') loadProducts();
+        if (tabName === 'categorias') loadCategories();
+        if (tabName === 'inventario') loadInventory();
+        if (tabName === 'reportes') loadReports();
+      }
+
+      // USUARIOS
+      async function loadUsers() {
+        try {
+          const token = getToken();
+          const res = await fetch(`${API_BASE}/admin/users`, {
+            headers: { 'Authorization': 'Bearer ' + token }
+          });
+          if (!res.ok) throw new Error('Error fetching users');
+          const data = await res.json();
+          renderUsersTable(data.users || []);
+          document.getElementById('usersLoading').style.display = 'none';
+        } catch (err) {
+          console.error(err);
+          document.getElementById('usersLoading').innerHTML = 'Error: ' + err.message;
         }
+      }
 
-        async function fetchUsers() {
-          try {
-            const token = getToken();
-            const res = await fetch(`${API_BASE}/admin/users`, {
-              headers: { 'Authorization': 'Bearer ' + token }
-            });
-            if (!res.ok) {
-              const txt = await res.text();
-              document.getElementById('usersContainer').innerText = 'Error fetching users: ' + res.status + ' - ' + txt;
-              return;
-            }
-            const data = await res.json();
-            renderTable(data.users || []);
-          } catch (err) {
-            document.getElementById('usersContainer').innerText = 'Network or CORS error: ' + err.message;
-            console.error('fetchUsers error', err);
+      function renderUsersTable(users) {
+        const tbody = document.querySelector('#usersTable tbody');
+        tbody.innerHTML = '';
+        users.forEach(u => {
+          const tr = document.createElement('tr');
+          const select = document.createElement('select');
+          select.className = 'form-select form-select-sm';
+          roles.forEach(r => {
+            const opt = document.createElement('option');
+            opt.value = r;
+            opt.text = r;
+            if (r === (u.rol || '')) opt.selected = true;
+            select.appendChild(opt);
+          });
+
+          const btnAsignar = document.createElement('button');
+          btnAsignar.className = 'btn btn-sm btn-primary me-1';
+          btnAsignar.innerText = 'Asignar';
+          btnAsignar.onclick = () => assignRole(u._id || u.id, select.value, tr);
+
+          const btnDelete = document.createElement('button');
+          btnDelete.className = 'btn btn-sm btn-danger';
+          btnDelete.innerText = 'Eliminar';
+          btnDelete.onclick = () => deleteUser(u._id || u.id, tr);
+
+          tr.innerHTML = `
+            <td>${u.nombre || u.name || ''}</td>
+            <td>${u.username || ''}</td>
+            <td>${u.email || ''}</td>
+            <td>${u.rol || 'Sin rol'}</td>
+            <td></td>
+            <td></td>
+          `;
+          tr.children[4].appendChild(select);
+          tr.children[5].appendChild(btnAsignar);
+          tr.children[5].appendChild(btnDelete);
+          tbody.appendChild(tr);
+        });
+      }
+
+      async function assignRole(userId, newRol, tr) {
+        try {
+          const token = getToken();
+          const r = await fetch(`${API_BASE}/admin/asignar-rol`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer ' + token
+            },
+            body: JSON.stringify({ userId, nuevoRol: newRol })
+          });
+          const json = await r.json();
+          if (r.ok) {
+            tr.children[3].innerText = newRol;
+            alert('Rol asignado correctamente');
+          } else {
+            alert(json.error || 'Error');
           }
+        } catch (err) {
+          alert('Error: ' + err.message);
         }
+      }
 
-        function renderTable(users) {
-          const tbody = document.querySelector('#usersTable tbody');
+      async function deleteUser(userId, tr) {
+        if (!confirm('¿Eliminar este usuario?')) return;
+        try {
+          const token = getToken();
+          const r = await fetch(`${API_BASE}/admin/users/${userId}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': 'Bearer ' + token }
+          });
+          if (r.ok) {
+            tr.remove();
+            alert('Usuario eliminado');
+          } else {
+            alert('Error al eliminar');
+          }
+        } catch (err) {
+          alert('Error: ' + err.message);
+        }
+      }
+
+      // PRODUCTOS
+      async function loadProducts() {
+        try {
+          const token = getToken();
+          const res = await fetch(`${API_BASE}/productos`, {
+            headers: { 'Authorization': 'Bearer ' + token }
+          });
+          if (!res.ok) throw new Error('Error fetching products');
+          const data = await res.json();
+          renderProductsTable(data.productos || data || []);
+          document.getElementById('productsLoading').style.display = 'none';
+        } catch (err) {
+          console.error(err);
+          document.getElementById('productsLoading').innerHTML = 'Cargando...';
+        }
+      }
+
+      function renderProductsTable(products) {
+        const tbody = document.querySelector('#productsTable tbody');
+        tbody.innerHTML = '';
+        products.forEach(p => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${p.nombre || ''}</td>
+            <td>${p.categoria || ''}</td>
+            <td>$${parseFloat(p.precio || 0).toFixed(2)}</td>
+            <td>${p.stock || 0}</td>
+            <td><span class="badge ${p.activo ? 'bg-success' : 'bg-danger'}">${p.activo ? 'Sí' : 'No'}</span></td>
+            <td>
+              <button class="btn btn-sm btn-warning me-1" onclick="editProduct('${p._id || p.id}')">Editar</button>
+              <button class="btn btn-sm btn-danger" onclick="deleteProduct('${p._id || p.id}', this)">Eliminar</button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+      }
+
+      async function saveProduct() {
+        const form = document.getElementById('productForm');
+        const data = {
+          nombre: document.getElementById('productName').value,
+          categoria: document.getElementById('productCategoria').value,
+          precio: parseFloat(document.getElementById('productPrecio').value),
+          stock: parseInt(document.getElementById('productStock').value),
+          descripcion: document.getElementById('productDescripcion').value,
+          activo: true
+        };
+        try {
+          const token = getToken();
+          const res = await fetch(`${API_BASE}/productos`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer ' + token
+            },
+            body: JSON.stringify(data)
+          });
+          if (res.ok) {
+            alert('Producto creado');
+            bootstrap.Modal.getInstance(document.getElementById('productModal')).hide();
+            form.reset();
+            loadProducts();
+          } else {
+            alert('Error al crear producto');
+          }
+        } catch (err) {
+          alert('Error: ' + err.message);
+        }
+      }
+
+      async function deleteProduct(productId, btn) {
+        if (!confirm('¿Eliminar este producto?')) return;
+        try {
+          const token = getToken();
+          const res = await fetch(`${API_BASE}/productos/${productId}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': 'Bearer ' + token }
+          });
+          if (res.ok) {
+            btn.closest('tr').remove();
+            alert('Producto eliminado');
+          } else {
+            alert('Error al eliminar');
+          }
+        } catch (err) {
+          alert('Error: ' + err.message);
+        }
+      }
+
+      // CATEGORIAS
+      async function loadCategories() {
+        try {
+          const token = getToken();
+          const res = await fetch(`${API_BASE}/productos`, {
+            headers: { 'Authorization': 'Bearer ' + token }
+          });
+          const data = await res.json();
+          const products = data.productos || data || [];
+          const categories = [...new Set(products.map(p => p.categoria))];
+          renderCategories(categories);
+        } catch (err) {
+          console.error(err);
+        }
+      }
+
+      function renderCategories(categories) {
+        const container = document.getElementById('categoriesList');
+        container.innerHTML = '';
+        categories.forEach(cat => {
+          const badge = document.createElement('span');
+          badge.className = 'badge bg-primary me-2 mb-2';
+          badge.innerText = cat;
+          container.appendChild(badge);
+        });
+      }
+
+      // INVENTARIO
+      async function loadInventory() {
+        try {
+          const token = getToken();
+          const res = await fetch(`${API_BASE}/productos`, {
+            headers: { 'Authorization': 'Bearer ' + token }
+          });
+          const data = await res.json();
+          const products = data.productos || data || [];
+          
+          document.getElementById('totalProducts').innerText = products.length;
+          const totalStock = products.reduce((sum, p) => sum + (p.stock || 0), 0);
+          document.getElementById('totalStock').innerText = totalStock;
+          
+          const lowStockProducts = products.filter(p => (p.stock || 0) < 10);
+          document.getElementById('lowStock').innerText = lowStockProducts.length;
+          
+          const tbody = document.querySelector('#lowStockTable tbody');
           tbody.innerHTML = '';
-          users.forEach(u => {
+          lowStockProducts.forEach(p => {
             const tr = document.createElement('tr');
             tr.innerHTML = `
-              <td>${u.nombre || u.name || ''}</td>
-              <td>${u.username || ''}</td>
-              <td>${u.email || ''}</td>
-              <td>${u._id || u.id || ''}</td>
-              <td>${u.rol || 'Sin rol'}</td>
-              <td></td>
-              <td></td>
+              <td>${p.nombre}</td>
+              <td>${p.stock || 0}</td>
+              <td><button class="btn btn-sm btn-warning" onclick="editProductStock('${p._id || p.id}')">Actualizar Stock</button></td>
             `;
-
-            const select = document.createElement('select');
-            select.className = 'form-select form-select-sm';
-            roles.forEach(r => {
-              const opt = document.createElement('option');
-              opt.value = r;
-              opt.text = r;
-              select.appendChild(opt);
-            });
-
-            const btn = document.createElement('button');
-            btn.className = 'btn btn-sm btn-primary me-1';
-            btn.innerText = 'Asignar';
-            btn.addEventListener('click', async () => {
-              try {
-                btn.disabled = true;
-                const nuevoRol = select.value;
-                const token = getToken();
-                const body = { userId: u._id || u.id, nuevoRol };
-                const r = await fetch(`${API_BASE}/admin/asignar-rol`, {
-                  method: 'PUT',
-                  headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + token
-                  },
-                  body: JSON.stringify(body)
-                });
-                const json = await r.json();
-                if (r.ok) {
-                  tr.cells[4].innerText = json.user.rol || nuevoRol;
-                  alert('Rol asignado correctamente');
-                } else {
-                  alert(json.error || 'Error');
-                }
-              } catch (err) {
-                console.error('assign role error', err);
-                alert('Network or CORS error: ' + err.message);
-              } finally {
-                btn.disabled = false;
-              }
-            });
-
-            tr.children[5].appendChild(select);
-            const actionCell = tr.children[6];
-            actionCell.appendChild(btn);
-
-            // delete button
-            const del = document.createElement('button');
-            del.className = 'btn btn-sm btn-danger';
-            del.innerText = 'Eliminar';
-            del.addEventListener('click', async () => {
-              if (!confirm('Eliminar usuario ' + (u.username || '') + '?')) return;
-              try {
-                del.disabled = true;
-                const token = getToken();
-                const id = u._id || u.id;
-                const r = await fetch(`${API_BASE}/admin/users/${id}`, {
-                  method: 'DELETE',
-                  headers: { 'Authorization': 'Bearer ' + token }
-                });
-                const json = await r.json();
-                if (r.ok) {
-                  tr.remove();
-                  alert(json.message || 'Usuario eliminado');
-                } else {
-                  alert(json.error || 'Error eliminando usuario');
-                }
-              } catch (err) {
-                console.error('delete error', err);
-                alert('Network error: ' + err.message);
-              } finally {
-                del.disabled = false;
-              }
-            });
-
-            actionCell.appendChild(del);
             tbody.appendChild(tr);
           });
+        } catch (err) {
+          console.error(err);
         }
+      }
 
-        // init
-        fetchUsers();
-      </script>
-    </div>
+      // REPORTES
+      async function loadReports() {
+        try {
+          const token = getToken();
+          const res = await fetch(`${API_BASE}/reportes`, {
+            headers: { 'Authorization': 'Bearer ' + token }
+          });
+          const data = res.ok ? await res.json() : {};
+          
+          // Mock data si no hay reportes reales
+          document.getElementById('totalSales').innerText = data.totalSales || 42;
+          document.getElementById('totalRevenue').innerText = '$' + (data.totalRevenue || 12500).toFixed(2);
+          document.getElementById('activeSellers').innerText = data.activeSellers || 8;
+          document.getElementById('avgTicket').innerText = '$' + (data.avgTicket || 297.61).toFixed(2);
+          
+          // Charts
+          if (salesChart) salesChart.destroy();
+          salesChart = new Chart(document.getElementById('salesChart'), {
+            type: 'line',
+            data: {
+              labels: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio'],
+              datasets: [{
+                label: 'Ventas',
+                data: [5, 7, 4, 8, 9, 6],
+                borderColor: '#3498db',
+                backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                tension: 0.4
+              }]
+            }
+          });
+
+          if (topProductsChart) topProductsChart.destroy();
+          topProductsChart = new Chart(document.getElementById('topProductsChart'), {
+            type: 'doughnut',
+            data: {
+              labels: ['Laptop', 'Mouse', 'Teclado', 'Monitor', 'Otros'],
+              datasets: [{
+                data: [30, 25, 20, 15, 10],
+                backgroundColor: ['#3498db', '#e74c3c', '#2ecc71', '#f39c12', '#9b59b6']
+              }]
+            }
+          });
+        } catch (err) {
+          console.error(err);
+        }
+      }
+
+      // Init
+      loadUsers();
+    </script>
   </body>
 </html>

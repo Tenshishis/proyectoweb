@@ -3,16 +3,388 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Vendedor</title>
+    <title>Panel Vendedor</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+      body { background-color: #f8f9fa; }
+      .sidebar { background-color: #27ae60; color: white; min-height: 100vh; }
+      .nav-link { color: #ecf0f1; }
+      .nav-link.active { color: #f1c40f; background-color: rgba(241, 196, 15, 0.1); }
+      .nav-link:hover { color: #f1c40f; }
+      .main-content { padding: 2rem; }
+      .tab-content { display: none; }
+      .tab-content.active { display: block; }
+      .card-header { background-color: #27ae60; color: white; }
+      .product-card { cursor: pointer; transition: transform 0.2s; }
+      .product-card:hover { transform: translateY(-5px); }
+      .cart-item { background-color: #ecf0f1; padding: 10px; margin-bottom: 10px; border-radius: 5px; }
+    </style>
   </head>
-  <body>
-    <div class="container mt-5">
-      <div class="d-flex justify-content-end mb-3">
-        <a href="/logout" class="btn btn-outline-danger btn-sm">Cerrar sesion</a>
+  <body data-api-base="{{ api_base }}">
+    <div class="container-fluid">
+      <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-3 sidebar p-3">
+          <h4 class="mb-4">Vendedor</h4>
+          <nav class="nav flex-column">
+            <a href="#" class="nav-link active" onclick="switchTab(event, 'catalogo')">📦 Catálogo</a>
+            <a href="#" class="nav-link" onclick="switchTab(event, 'carrito')">🛒 Carrito (<span id="cartCount">0</span>)</a>
+            <a href="#" class="nav-link" onclick="switchTab(event, 'historial')">📋 Historial de Ventas</a>
+            <a href="#" class="nav-link" onclick="switchTab(event, 'inventario')">📊 Mi Inventario</a>
+            <a href="#" class="nav-link" onclick="switchTab(event, 'perfil')">👤 Mi Perfil</a>
+            <hr>
+            <a href="/logout" class="nav-link">🚪 Cerrar Sesión</a>
+          </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-md-9 main-content">
+          <!-- CATALOGO -->
+          <div id="catalogo" class="tab-content active">
+            <h2 class="mb-4">Catálogo de Productos</h2>
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <input type="text" class="form-control" id="searchInput" placeholder="Buscar producto..." onkeyup="filterProducts()">
+              </div>
+              <div class="col-md-6">
+                <select class="form-select" id="categoryFilter" onchange="filterProducts()">
+                  <option value="">Todas las categorías</option>
+                </select>
+              </div>
+            </div>
+            <div class="row" id="productsGrid"></div>
+            <div id="catalogLoading" class="alert alert-info">Cargando productos...</div>
+          </div>
+
+          <!-- CARRITO -->
+          <div id="carrito" class="tab-content">
+            <h2 class="mb-4">🛒 Carrito de Compras</h2>
+            <div class="row">
+              <div class="col-md-8">
+                <div class="card">
+                  <div class="card-header">
+                    <h5>Items en el Carrito</h5>
+                  </div>
+                  <div class="card-body" id="cartItems">
+                    <p class="text-muted">El carrito está vacío</p>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="card">
+                  <div class="card-header">
+                    <h5>Resumen de Venta</h5>
+                  </div>
+                  <div class="card-body">
+                    <div class="row mb-2">
+                      <div class="col">Subtotal:</div>
+                      <div class="col text-end">$<span id="subtotal">0.00</span></div>
+                    </div>
+                    <div class="row mb-2">
+                      <div class="col">Impuesto (IVA 19%):</div>
+                      <div class="col text-end">$<span id="tax">0.00</span></div>
+                    </div>
+                    <hr>
+                    <div class="row mb-3">
+                      <div class="col"><strong>Total:</strong></div>
+                      <div class="col text-end"><strong>$<span id="total">0.00</span></strong></div>
+                    </div>
+                    <div class="mb-3">
+                      <label for="clientName" class="form-label">Cliente</label>
+                      <input type="text" class="form-control" id="clientName" placeholder="Nombre del cliente">
+                    </div>
+                    <div class="mb-3">
+                      <label for="paymentMethod" class="form-label">Método de Pago</label>
+                      <select class="form-select" id="paymentMethod">
+                        <option value="efectivo">Efectivo</option>
+                        <option value="tarjeta">Tarjeta de Crédito</option>
+                        <option value="transferencia">Transferencia Bancaria</option>
+                        <option value="cheque">Cheque</option>
+                      </select>
+                    </div>
+                    <button class="btn btn-success w-100 mb-2" onclick="completeSale()">✅ Completar Venta</button>
+                    <button class="btn btn-danger w-100" onclick="clearCart()">🗑️ Limpiar Carrito</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- HISTORIAL -->
+          <div id="historial" class="tab-content">
+            <h2 class="mb-4">Historial de Ventas</h2>
+            <div class="card">
+              <div class="card-body">
+                <table class="table table-striped" id="salesTable">
+                  <thead>
+                    <tr><th>Fecha</th><th>Cliente</th><th>Monto</th><th>Ítems</th><th>Estado</th><th>Acciones</th></tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+                <div id="salesLoading" class="alert alert-info">Cargando ventas...</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- INVENTARIO -->
+          <div id="inventario" class="tab-content">
+            <h2 class="mb-4">Mi Inventario</h2>
+            <div class="row mb-3">
+              <div class="col-md-4"><div class="card text-center"><div class="card-body"><h6>Productos</h6><h3 id="assignedProducts">0</h3></div></div></div>
+              <div class="col-md-4"><div class="card text-center"><div class="card-body"><h6>Stock Total</h6><h3 id="totalInventoryStock">0</h3></div></div></div>
+              <div class="col-md-4"><div class="card text-center"><div class="card-body"><h6>Valor</h6><h3 id="inventoryValue">$0</h3></div></div></div>
+            </div>
+            <div class="card">
+              <div class="card-header"><h5>Detalle de Inventario</h5></div>
+              <div class="card-body">
+                <table class="table table-striped" id="inventoryTable">
+                  <thead><tr><th>Producto</th><th>Stock</th><th>Precio</th><th>Valor</th><th>Estado</th></tr></thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- PERFIL -->
+          <div id="perfil" class="tab-content">
+            <h2 class="mb-4">Mi Perfil</h2>
+            <div class="row">
+              <div class="col-md-6">
+                <div class="card">
+                  <div class="card-header"><h5>Información Personal</h5></div>
+                  <div class="card-body">
+                    <div class="mb-3"><label class="form-label">Nombre</label><input type="text" class="form-control" id="profileName" disabled></div>
+                    <div class="mb-3"><label class="form-label">Usuario</label><input type="text" class="form-control" id="profileUsername" disabled></div>
+                    <div class="mb-3"><label class="form-label">Email</label><input type="email" class="form-control" id="profileEmail" disabled></div>
+                    <div class="mb-3"><label class="form-label">Rol</label><input type="text" class="form-control" value="VENDEDOR" disabled></div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="card">
+                  <div class="card-header"><h5>Estadísticas</h5></div>
+                  <div class="card-body">
+                    <div class="row mb-3"><div class="col"><h6>Ventas</h6><h3 id="statTotalSales">0</h3></div><div class="col"><h6>Ingresos</h6><h3 id="statTotalRevenue">$0</h3></div></div>
+                    <div class="row"><div class="col"><h6>Ticket</h6><h3 id="statAvgTicket">$0</h3></div><div class="col"><h6>Comisión</h6><h3 id="statCommission">$0</h3></div></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-      <h1>Zona de vendedor</h1>
-      <p>Bienvenido vendedor.</p>
     </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      const API_BASE = document.body.dataset.apiBase;
+      let cart = [];
+      let allProducts = [];
+
+      function getToken() {
+        const cookieToken = document.cookie.split('; ').find(row => row.startsWith('token='));
+        return cookieToken ? cookieToken.split('=')[1] : null;
+      }
+
+      function switchTab(e, tabName) {
+        e.preventDefault();
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
+        document.getElementById(tabName).classList.add('active');
+        event.target.classList.add('active');
+        
+        if (tabName === 'catalogo') loadCatalog();
+        if (tabName === 'historial') loadSalesHistory();
+        if (tabName === 'inventario') loadMyInventory();
+        if (tabName === 'perfil') loadProfile();
+      }
+
+      async function loadCatalog() {
+        try {
+          const token = getToken();
+          const res = await fetch(`${API_BASE}/productos`, {
+            headers: { 'Authorization': 'Bearer ' + token }
+          });
+          if (!res.ok) throw new Error('Error');
+          const data = await res.json();
+          allProducts = data.productos || data || [];
+          renderProducts(allProducts);
+          loadCategories();
+          document.getElementById('catalogLoading').style.display = 'none';
+        } catch (err) {
+          document.getElementById('catalogLoading').innerHTML = 'Error: ' + err.message;
+        }
+      }
+
+      function renderProducts(products) {
+        const grid = document.getElementById('productsGrid');
+        grid.innerHTML = '';
+        products.forEach(p => {
+          const card = document.createElement('div');
+          card.className = 'col-md-4 mb-4';
+          card.innerHTML = `
+            <div class="card product-card h-100">
+              <div class="card-body">
+                <h5 class="card-title">${p.nombre}</h5>
+                <p class="card-text text-muted">${p.categoria}</p>
+                <p class="card-text">${p.descripcion || ''}</p>
+                <div class="row mb-2">
+                  <div class="col"><strong>$${parseFloat(p.precio || 0).toFixed(2)}</strong></div>
+                  <div class="col text-end"><span class="badge ${p.stock > 0 ? 'bg-success' : 'bg-danger'}">${p.stock || 0}</span></div>
+                </div>
+              </div>
+              <div class="card-footer bg-light">
+                <button class="btn btn-sm btn-primary w-100" onclick="addToCart('${p._id || p.id}', '${p.nombre}', ${p.precio}, ${p.stock})" ${p.stock <= 0 ? 'disabled' : ''}>
+                  Agregar al Carrito
+                </button>
+              </div>
+            </div>
+          `;
+          grid.appendChild(card);
+        });
+      }
+
+      function loadCategories() {
+        const categories = [...new Set(allProducts.map(p => p.categoria))];
+        const select = document.getElementById('categoryFilter');
+        select.innerHTML = '<option value="">Todas las categorías</option>';
+        categories.forEach(cat => {
+          const opt = document.createElement('option');
+          opt.value = cat;
+          opt.text = cat;
+          select.appendChild(opt);
+        });
+      }
+
+      function filterProducts() {
+        const category = document.getElementById('categoryFilter').value;
+        const search = document.getElementById('searchInput').value.toLowerCase();
+        const filtered = allProducts.filter(p => 
+          (!category || p.categoria === category) &&
+          (!search || p.nombre.toLowerCase().includes(search))
+        );
+        renderProducts(filtered);
+      }
+
+      function addToCart(productId, name, price, stock) {
+        const quantity = prompt(`¿Cuántos? (Disponibles: ${stock})`, '1');
+        if (!quantity) return;
+        const qty = parseInt(quantity);
+        if (qty > stock) { alert('Stock insuficiente'); return; }
+        const existing = cart.find(item => item.id === productId);
+        if (existing) existing.quantity += qty;
+        else cart.push({ id: productId, name, price, quantity: qty });
+        updateCartUI();
+        alert(`${qty} ${name}(s) agregado(s)`);
+      }
+
+      function updateCartUI() {
+        document.getElementById('cartCount').innerText = cart.length;
+        const container = document.getElementById('cartItems');
+        if (cart.length === 0) {
+          container.innerHTML = '<p class="text-muted">El carrito está vacío</p>';
+        } else {
+          container.innerHTML = cart.map(item => `
+            <div class="cart-item">
+              <div class="row">
+                <div class="col"><h6>${item.name}</h6><p class="text-muted mb-0">$${parseFloat(item.price).toFixed(2)} x ${item.quantity}</p></div>
+                <div class="col text-end"><h6>$${(item.price * item.quantity).toFixed(2)}</h6><button class="btn btn-sm btn-danger" onclick="removeFromCart('${item.id}')">Quitar</button></div>
+              </div>
+            </div>
+          `).join('');
+        }
+        updateTotals();
+      }
+
+      function removeFromCart(productId) {
+        cart = cart.filter(item => item.id !== productId);
+        updateCartUI();
+      }
+
+      function updateTotals() {
+        const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        const tax = subtotal * 0.19;
+        const total = subtotal + tax;
+        document.getElementById('subtotal').innerText = subtotal.toFixed(2);
+        document.getElementById('tax').innerText = tax.toFixed(2);
+        document.getElementById('total').innerText = total.toFixed(2);
+      }
+
+      async function completeSale() {
+        if (cart.length === 0) { alert('El carrito está vacío'); return; }
+        const clientName = document.getElementById('clientName').value;
+        if (!clientName) { alert('Ingresa el cliente'); return; }
+        try {
+          const token = getToken();
+          const res = await fetch(`${API_BASE}/ventas`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+            body: JSON.stringify({ cliente: clientName, items: cart, metodoPago: document.getElementById('paymentMethod').value, total: parseFloat(document.getElementById('total').innerText) })
+          });
+          if (res.ok) { alert('Venta registrada'); clearCart(); loadSalesHistory(); } 
+          else alert('Error');
+        } catch (err) { alert('Error: ' + err.message); }
+      }
+
+      function clearCart() {
+        cart = [];
+        document.getElementById('clientName').value = '';
+        updateCartUI();
+      }
+
+      async function loadSalesHistory() {
+        try {
+          const token = getToken();
+          const res = await fetch(`${API_BASE}/ventas`, {
+            headers: { 'Authorization': 'Bearer ' + token }
+          });
+          const data = res.ok ? await res.json() : { ventas: [] };
+          const tbody = document.querySelector('#salesTable tbody');
+          tbody.innerHTML = '';
+          (data.ventas || data || []).forEach(sale => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td>${new Date(sale.fecha || sale.createdAt).toLocaleDateString()}</td><td>${sale.cliente || 'Cliente'}</td><td>$${parseFloat(sale.total || 0).toFixed(2)}</td><td>${sale.items ? sale.items.length : 1}</td><td><span class="badge bg-success">Completada</span></td><td><button class="btn btn-sm btn-info">Ver</button></td>`;
+            tbody.appendChild(tr);
+          });
+          document.getElementById('salesLoading').style.display = 'none';
+        } catch (err) { document.getElementById('salesLoading').innerHTML = 'Error: ' + err.message; }
+      }
+
+      async function loadMyInventory() {
+        try {
+          const token = getToken();
+          const res = await fetch(`${API_BASE}/productos`, {
+            headers: { 'Authorization': 'Bearer ' + token }
+          });
+          const data = await res.json();
+          const products = data.productos || data || [];
+          const totalStock = products.reduce((sum, p) => sum + (p.stock || 0), 0);
+          const inventoryValue = products.reduce((sum, p) => sum + ((p.price || 0) * (p.stock || 0)), 0);
+          
+          document.getElementById('assignedProducts').innerText = products.length;
+          document.getElementById('totalInventoryStock').innerText = totalStock;
+          document.getElementById('inventoryValue').innerText = '$' + inventoryValue.toFixed(2);
+          
+          const tbody = document.querySelector('#inventoryTable tbody');
+          tbody.innerHTML = '';
+          products.forEach(p => {
+            const status = p.stock > 10 ? 'Bueno' : p.stock > 0 ? 'Bajo' : 'Agotado';
+            tbody.innerHTML += `<tr><td>${p.nombre}</td><td>${p.stock || 0}</td><td>$${parseFloat(p.precio || 0).toFixed(2)}</td><td>$${((p.precio || 0) * (p.stock || 0)).toFixed(2)}</td><td><span class="badge ${p.stock > 10 ? 'bg-success' : p.stock > 0 ? 'bg-warning' : 'bg-danger'}">${status}</span></td></tr>`;
+          });
+        } catch (err) { console.error(err); }
+      }
+
+      function loadProfile() {
+        document.getElementById('profileName').value = 'Vendedor Demo';
+        document.getElementById('profileUsername').value = 'vendedor1';
+        document.getElementById('profileEmail').value = 'vendedor@example.com';
+        document.getElementById('statTotalSales').innerText = '23';
+        document.getElementById('statTotalRevenue').innerText = '$8,450';
+        document.getElementById('statAvgTicket').innerText = '$367';
+        document.getElementById('statCommission').innerText = '$1,267';
+      }
+
+      loadCatalog();
+    </script>
   </body>
 </html>

@@ -3,6 +3,7 @@ const path = require('path');
 const bcrypt = require('bcrypt');
 const Producto = require('../models/Producto');
 const defaultProducts = require('../utils/defaultProducts');
+const syncMongoProducts = require('../utils/syncMongoProducts');
 
 let bootstrapped = false;
 
@@ -45,13 +46,15 @@ async function ensureDefaultAdmin(query) {
 }
 
 async function ensureMongoProducts() {
+  const forceSeed = process.env.FORCE_MONGO_PRODUCT_SEED === 'true';
   const totalProductos = await Producto.countDocuments();
-  if (totalProductos > 0) {
+
+  if (totalProductos > 0 && !forceSeed) {
     return;
   }
 
-  await Producto.insertMany(defaultProducts, { ordered: true });
-  console.log(`[bootstrap] Catalogo inicial cargado en MongoDB: ${defaultProducts.length} productos`);
+  await syncMongoProducts(defaultProducts);
+  console.log(`[bootstrap] Catalogo de MongoDB sincronizado: ${defaultProducts.length} productos`);
 }
 
 async function bootstrapDatastores({ query, mongoReady }) {

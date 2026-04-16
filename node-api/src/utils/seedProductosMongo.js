@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
-const Producto = require('../models/Producto');
 const defaultProducts = require('./defaultProducts');
+const syncMongoProducts = require('./syncMongoProducts');
 require('dotenv').config();
 
 async function run() {
@@ -10,17 +10,7 @@ async function run() {
 
   await mongoose.connect(process.env.MONGO_URI);
 
-  const seedNames = defaultProducts.map((producto) => producto.nombre);
-
-  await Producto.deleteMany({ nombre: { $nin: seedNames } });
-
-  for (const producto of defaultProducts) {
-    await Producto.updateOne(
-      { nombre: producto.nombre },
-      { $set: producto },
-      { upsert: true }
-    );
-  }
+  await syncMongoProducts(defaultProducts);
 
   console.log(`Productos sincronizados en MongoDB: ${defaultProducts.length}`);
   await mongoose.disconnect();
